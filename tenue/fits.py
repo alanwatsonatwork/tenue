@@ -33,3 +33,28 @@ def readrawdata(fitspath, name=None):
     hdu = astropy.io.fits.open(fitspath)
     return np.array(hdu[_ihdu(fitspath)].data, dtype=np.float32)
 
+def readproductheader(fitspath, name=None):
+    if name is not None:
+        print(
+            "%s: reading header from product file %s." % (name, os.path.basename(fitspath))
+        )
+    hdu = astropy.io.fits.open(fitspath)
+    return hdu[_ihdu(fitspath)].header
+
+
+def readproductdata(fitspath, name=None):
+    if name is not None:
+        print("%s: reading data from product file %s." % (name, os.path.basename(fitspath)))
+    hdu = astropy.io.fits.open(fitspath)
+    return np.array(hdu[_ihdu(fitspath)].data, dtype=np.float32)
+
+def writeproduct(fitspath, data, name=None, filter=None):
+    if name is not None:
+        print("%s: writing product file %s." % (name, os.path.basename(fitspath)))
+    header = astropy.io.fits.Header()
+    if filter is not None:
+        header.append(("FILTER", filter))
+    astropy.io.fits.writeto(
+        fitspath, data, header, overwrite=True
+    )
+    return
