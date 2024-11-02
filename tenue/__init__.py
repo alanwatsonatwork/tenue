@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.ndimage
 
+from tenue.fits import readrawdata, readrawheader
+
 import sys
 
 if not sys.warnoptions:
@@ -24,7 +26,7 @@ def getfitspaths(directorypath, filter=None):
         return list(
             fitspath
             for fitspath in fitspaths
-            if astropy.io.fits.open(fitspath)[0].header["FILTER"] == filter
+            if readrawheader(fitspath)["FILTER"] == filter
         )
 
 
@@ -151,9 +153,8 @@ def cook(
 ):
 
     print("%s: reading file %s." % (name, os.path.basename(fitspath)))
-    hdu = astropy.io.fits.open(fitspath)
-    data = np.array(hdu[0].data, dtype=np.float32)
-    header = hdu[0].header
+    header = readrawheader(fitspath)
+    data = readrawdata(fitspath)
 
     # Set saturated pixels to nan.
     data[np.where(data == (2**16 - 1))] = np.nan
@@ -438,13 +439,13 @@ def makeobject(
     doskyimage=False,
 ):
     def readonepointing(fitspath):
-        hdu = astropy.io.fits.open(fitspath)
+        header = readrawheader(fitspath)
         print(
             "makeobject: reading pointing for %s object file %s."
             % (filter, os.path.basename(fitspath))
         )
-        alpha = math.radians(hdu[0].header[alphakeyword])
-        delta = math.radians(hdu[0].header[deltakeyword])
+        alpha = math.radians(header[alphakeyword])
+        delta = math.radians(header[deltakeyword])
         print(
             "makeobject: pointing is alpha = %.5f deg delta = %.5f deg."
             % (math.degrees(alpha), math.degrees(delta))
@@ -493,10 +494,10 @@ def makeobject(
         )
         data -= sky
 
-        hdu = astropy.io.fits.open(fitspath)
+        header = readrawheader(fitspath)
 
-        alpha = math.radians(hdu[0].header[alphakeyword])
-        delta = math.radians(hdu[0].header[deltakeyword])
+        alpha = math.radians(header[alphakeyword])
+        delta = math.radians(header[deltakeyword])
         print(
             "makeobject: pointing is alpha = %.5f deg delta = %.5f deg."
             % (math.degrees(alpha), math.degrees(delta))
