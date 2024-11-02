@@ -161,7 +161,9 @@ def cook(
     if dooverscan:
         # Converted from BIASSEC.
         overscandata = data[overscanyslice, overscanxslice]
-        mean, median, sigma = astropy.stats.sigma_clipped_stats(overscandata, sigma=3)
+        mean, median, sigma = astropy.stats.sigma_clipped_stats(
+            overscandata, sigma=3, cenfunc="median", stdfunc="mad_std"
+        )
         print("%s: removing overscan level of %.2f ± %.2f DN." % (name, mean, sigma))
         data -= mean
 
@@ -255,11 +257,13 @@ def makebias(directorypath):
 
     print("makebias: averaging %d biases with rejection." % len(datalist))
     mean, median, sigma = astropy.stats.sigma_clipped_stats(
-        datalist, sigma=3, axis=0, stdfunc=astropy.stats.mad_std
+        datalist, sigma=3, axis=0, cenfunc="median", stdfunc="mad_std"
     )
     biasdata = mean
 
-    mean, median, sigma = astropy.stats.sigma_clipped_stats(biasdata, sigma=5)
+    mean, median, sigma = astropy.stats.sigma_clipped_stats(
+        biasdata, sigma=5, cenfunc="median", stdfunc="mad_std"
+    )
     print("makebias: final residual bias level is %.2f ± %.2f DN." % (mean, sigma))
 
     print("makebias: plotting median of columns.")
@@ -299,11 +303,13 @@ def makedark(directorypath):
 
     print("makedark: averaging %d darks with rejection." % len(datalist))
     mean, median, sigma = astropy.stats.sigma_clipped_stats(
-        datalist, sigma=3, axis=0, stdfunc=astropy.stats.mad_std
+        datalist, sigma=3, axis=0, cenfunc="median", stdfunc="mad_std"
     )
     darkdata = mean
 
-    mean, median, sigma = astropy.stats.sigma_clipped_stats(darkdata, sigma=5)
+    mean, median, sigma = astropy.stats.sigma_clipped_stats(
+        darkdata, sigma=5, cenfunc="median", stdfunc="mad_std"
+    )
     print("makedark: final residual dark level is %.2f ± %.2f DN." % (mean, sigma))
 
     print("makedark: plotting median of columns.")
@@ -338,7 +344,7 @@ def makeflatandmask(directorypath, filter):
         datalist = list(readoneflat(fitspath) for fitspath in fitspathlist)
         print("makeflatandmask: averaging %d flats with rejectiqon." % (len(datalist)))
         mean, median, sigma = astropy.stats.sigma_clipped_stats(
-            datalist, sigma=3, axis=0, stdfunc=astropy.stats.mad_std
+            datalist, sigma=3, axis=0, cenfunc="median", stdfunc="mad_std"
         )
         flatdata = mean
         return flatdata
@@ -581,7 +587,7 @@ def makeobject(
         skystack = np.array(list(readonesky(fitspath) for fitspath in fitspathlist))
         print("makeobject: making sky image.")
         mean, median, sigma = astropy.stats.sigma_clipped_stats(
-            skystack, sigma=3, axis=0, stdfunc=astropy.stats.mad_std
+            skystack, sigma=3, axis=0, cenfunc="median", stdfunc="mad_std"
         )
         sky = mean
         # sky = np.nanmedian(skystack, axis=0)
@@ -601,7 +607,7 @@ def makeobject(
             "makeobject: averaging %d object files with rejection." % len(objectstack)
         )
         mean, median, sigma = astropy.stats.sigma_clipped_stats(
-            objectstack, sigma=10, axis=0, stdfunc=astropy.stats.mad_std
+            objectstack, sigma=10, axis=0, cenfunc="median", stdfunc="mad_std"
         )
     object = mean
 
