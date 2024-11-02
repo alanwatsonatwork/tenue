@@ -14,7 +14,8 @@ if not sys.warnoptions:
     import warnings
 
     warnings.simplefilter("ignore")
-    
+
+
 def getfitspaths(directorypath, filter=None):
     fitspaths = sorted(glob.glob(directorypath + "/*.fits"))
     if filter == None:
@@ -25,7 +26,8 @@ def getfitspaths(directorypath, filter=None):
             for fitspath in fitspaths
             if astropy.io.fits.open(fitspath)[0].header["FILTER"] == filter
         )
-        
+
+
 def readbias(directorypath, name="readbias"):
     global _biasdata
     path = directorypath + "/bias.fits"
@@ -122,15 +124,17 @@ def writeobject(directorypath, data, filter, name="writeobject"):
         directorypath + ("/object-%s.fits" % filter), overwrite=True
     )
     return
-    
-overscanyslice = slice(11,2058)
-overscanxslice = slice(1,4)
+
+
+overscanyslice = slice(11, 2058)
+overscanxslice = slice(1, 4)
 
 overscanyslice = slice(1, 10)
 overscanxslice = slice(18, 2065)
 
 trimyslice = slice(11, 2058)
 trimxslice = slice(18, 2065)
+
 
 def cook(
     fitspath,
@@ -148,11 +152,11 @@ def cook(
 
     print("%s: reading file %s." % (name, os.path.basename(fitspath)))
     hdu = astropy.io.fits.open(fitspath)
-    data   = np.array(hdu[0].data, dtype=np.float32)
+    data = np.array(hdu[0].data, dtype=np.float32)
     header = hdu[0].header
 
     # Set saturated pixels to nan.
-    data[np.where(data == (2 ** 16 - 1))] = np.nan
+    data[np.where(data == (2**16 - 1))] = np.nan
 
     if dooverscan:
         # Converted from BIASSEC.
@@ -182,18 +186,18 @@ def cook(
         print("%s: windowing." % (name))
         cx = 1996 / 2 + 30
         cy = 2028 / 2 - 0
-        n = 512*3
-        sx = int(cx-n/2)
-        sy = int(cy-n/2)
-        data = data[sy:sy+n,sx:sx+n]
+        n = 512 * 3
+        sx = int(cx - n / 2)
+        sy = int(cy - n / 2)
+        data = data[sy : sy + n, sx : sx + n]
 
     median = np.nanmedian(data)
     print("%s: median is %.1f DN." % (name, median))
 
     if dosky:
         print("%s: subtracting sky." % (name))
-        #data -= np.nanmedian(data, axis=0, keepdims=True)
-        #data -= np.nanmedian(data, axis=1, keepdims=True)
+        # data -= np.nanmedian(data, axis=0, keepdims=True)
+        # data -= np.nanmedian(data, axis=1, keepdims=True)
         data -= np.nanmedian(data, keepdims=True)
 
     if donormalize:
@@ -203,10 +207,11 @@ def cook(
     if dorotate:
         print("%s: rotating to standard orientation." % (name))
         rotation = header["SMTMRO"]
-        data = np.rot90(data, -int(rotation/90))        
+        data = np.rot90(data, -int(rotation / 90))
 
     return data
-    
+
+
 def makefakebias():
     global _biasdata
     _biasdata = np.zeros((2051, 1024))
@@ -229,7 +234,8 @@ def makefakemask():
     global _maskdata
     _maskdata = np.ones((2051, 1024))
     return _maskdata
-    
+
+
 def makebias(directorypath):
     def readonebias(fitspath):
         return cook(fitspath, name="makebias", dooverscan=True, dotrim=True)
@@ -271,9 +277,12 @@ def makebias(directorypath):
 
     return
 
+
 def makedark(directorypath):
     def readonedark(fitspath):
-        return cook(fitspath, name="makedark", dooverscan=True, dotrim=True, dobias=True)
+        return cook(
+            fitspath, name="makedark", dooverscan=True, dotrim=True, dobias=True
+        )
 
     print("makedark: making dark.fits from %s." % (directorypath))
 
@@ -311,7 +320,8 @@ def makedark(directorypath):
     print("makedark: finished.")
 
     return
-    
+
+
 def makeflatandmask(directorypath, filter):
     def readoneflat(fitspath):
         return cook(
@@ -406,12 +416,20 @@ def makeflatandmask(directorypath, filter):
     print("makeflatandmask: finished.")
 
     return
-    
+
+
 def makeobject(
-    directorypath, filter, align=None, nalignregion=40, 
-    refalpha=None, refdelta=None, rotation=0, sigma=None, 
+    directorypath,
+    filter,
+    align=None,
+    nalignregion=40,
+    refalpha=None,
+    refdelta=None,
+    rotation=0,
+    sigma=None,
     nwindow=None,
-    showalignment=True, doskyimage=False
+    showalignment=True,
+    doskyimage=False,
 ):
     def readonepointing(fitspath):
         hdu = astropy.io.fits.open(fitspath)
@@ -430,8 +448,7 @@ def makeobject(
     def readonesky(fitspath):
 
         print(
-            "makeobject: reading %s sky file %s."
-            % (filter, os.path.basename(fitspath))
+            "makeobject: reading %s sky file %s." % (filter, os.path.basename(fitspath))
         )
 
         data = cook(
@@ -448,7 +465,6 @@ def makeobject(
         )
 
         return data
-
 
     def readoneobject(fitspath):
 
@@ -528,7 +544,7 @@ def makeobject(
         xc = int(data.shape[1] / 2)
         ys = int(yc - nwindow / 2)
         xs = int(xc - nwindow / 2)
-        data = data[ys:ys+nwindow,xs:xs+nwindow]
+        data = data[ys : ys + nwindow, xs : xs + nwindow]
 
         print("makeobject: subtracting sky.")
         data -= np.nanmedian(data, keepdims=True)
@@ -568,17 +584,22 @@ def makeobject(
             skystack, sigma=3, axis=0, stdfunc=astropy.stats.mad_std
         )
         sky = mean
-        #sky = np.nanmedian(skystack, axis=0)
+        # sky = np.nanmedian(skystack, axis=0)
     else:
         sky = 0
 
     objectstack = np.array(list(readoneobject(fitspath) for fitspath in fitspathlist))
 
     if sigma is None:
-        print("makeobject: averaging %d object files without rejection." % len(objectstack))
+        print(
+            "makeobject: averaging %d object files without rejection."
+            % len(objectstack)
+        )
         mean = np.average(objectstack, axis=0)
     else:
-        print("makeobject: averaging %d object files with rejection." % len(objectstack))
+        print(
+            "makeobject: averaging %d object files with rejection." % len(objectstack)
+        )
         mean, median, sigma = astropy.stats.sigma_clipped_stats(
             objectstack, sigma=10, axis=0, stdfunc=astropy.stats.mad_std
         )
@@ -589,4 +610,3 @@ def makeobject(
     print("makeobject: finished.")
 
     return object
-    
