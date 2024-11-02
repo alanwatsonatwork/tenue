@@ -4,7 +4,10 @@ import os.path
 from tenue.fits import readrawheader
 
 def getrawfitspaths(directorypath, filter=None):
-    fitspaths = sorted(glob.glob(directorypath + "/*.fits"))
+    fitspaths = glob.glob(directorypath + "/*.fits")
+    if len(fitspaths) == 0:
+        fitspaths = glob.glob(directorypath + "/*.fits.fz")
+    fitspaths = sorted(fitspaths)
     if filter == None:
         return fitspaths
     else:
