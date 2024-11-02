@@ -1,4 +1,3 @@
-import glob
 import math
 import os.path
 
@@ -9,6 +8,7 @@ import numpy as np
 import scipy.ndimage
 
 from tenue.fits import readrawdata, readrawheader
+from tenue.path import getrawfitspaths
 
 import sys
 
@@ -16,18 +16,6 @@ if not sys.warnoptions:
     import warnings
 
     warnings.simplefilter("ignore")
-
-
-def getfitspaths(directorypath, filter=None):
-    fitspaths = sorted(glob.glob(directorypath + "/*.fits"))
-    if filter == None:
-        return fitspaths
-    else:
-        return list(
-            fitspath
-            for fitspath in fitspaths
-            if readrawheader(fitspath)["FILTER"] == filter
-        )
 
 
 def readbias(directorypath, name="readbias"):
@@ -245,7 +233,7 @@ def makebias(directorypath):
 
     print("makebias: making bias.fits from %s." % (directorypath))
 
-    fitspathlist = getfitspaths(directorypath + "/bias/")
+    fitspathlist = getrawfitspaths(directorypath + "/bias/")
     if len(fitspathlist) == 0:
         print("ERROR: no bias files found.")
         return
@@ -291,7 +279,7 @@ def makedark(directorypath):
 
     print("makedark: making dark.fits from %s." % (directorypath))
 
-    fitspathlist = getfitspaths(directorypath + "/dark/")
+    fitspathlist = getrawfitspaths(directorypath + "/dark/")
     if len(fitspathlist) == 0:
         print("ERROR: no dark files found.")
         return
@@ -386,7 +374,7 @@ def makeflatandmask(directorypath, filter):
 
     print("makeflatandmask: making %s flat from %s." % (filter, directorypath))
 
-    fitspathlist = getfitspaths(directorypath + "/flat/", filter=filter)
+    fitspathlist = getrawfitspaths(directorypath + "/flat/", filter=filter)
     if len(fitspathlist) == 0:
         print("ERROR: no flat files found.")
         return
@@ -564,7 +552,7 @@ def makeobject(
 
     print("makeobject: making %s object from %s." % (filter, directorypath))
 
-    fitspathlist = getfitspaths(directorypath + "/object/", filter=filter)
+    fitspathlist = getrawfitspaths(directorypath + "/object/", filter=filter)
     if len(fitspathlist) == 0:
         print("ERROR: no object files found.")
         return
