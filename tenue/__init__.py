@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.ndimage
 
-from tenue.fits import readrawdata, readrawheader
+from tenue.fits import readrawdata, readrawheader, readproductdata, readproductheader, writeproduct
 from tenue.path import getrawfitspaths
 
 import sys
@@ -23,7 +23,7 @@ def readbias(directorypath, name="readbias"):
     path = directorypath + "/bias.fits"
     if os.path.exists(path):
         print("%s: reading bias.fits" % (name))
-        _biasdata = astropy.io.fits.open(path)[0].data
+        _biasdata = readproductdata(path)
     else:
         print("%s: WARNING: no bias found; using a fake bias." % (name))
         makefakebias()
@@ -35,7 +35,7 @@ def readdark(directorypath, name="readdark"):
     path = directorypath + "/dark.fits"
     if os.path.exists(path):
         print("%s: reading dark.fits" % (name))
-        _darkdata = astropy.io.fits.open(path)[0].data
+        _darkdata = readproductdata(path)
     else:
         print("%s: WARNING: no dark found; using a fake dark." % (name))
         makefakedark()
@@ -47,7 +47,7 @@ def readflat(directorypath, filter, name="readflat"):
     path = directorypath + ("/flat-%s.fits" % filter)
     if os.path.exists(path):
         print("%s: reading flat-%s.fits" % (name, filter))
-        _flatdata = astropy.io.fits.open(path)[0].data
+        _flatdata = readproductdata(path)
     else:
         print("%s: WARNING: no flat found; using a fake flat." % (name))
         makefakeflat()
@@ -59,7 +59,7 @@ def readmask(directorypath, filter, name="readmask"):
     path = directorypath + ("/mask-%s.fits" % filter)
     if os.path.exists(path):
         print("%s: reading mask-%s.fits" % (name, filter))
-        _maskdata = astropy.io.fits.open(path)[0].data
+        _maskdata = readproductdata(path)
     else:
         print("%s: WARNING: no mask found; using a fake mask." % (name))
         makefakemask()
@@ -70,8 +70,8 @@ def writebias(directorypath, data, name="writebias"):
     print("%s: writing bias.fits" % (name))
     global _biasdata
     _biasdata = data
-    astropy.io.fits.PrimaryHDU(data).writeto(
-        directorypath + "/bias.fits", overwrite=True
+    writeproduct(
+        directorypath + "/bias.fits", data
     )
     return
 
@@ -80,8 +80,8 @@ def writedark(directorypath, data, name="writebias"):
     print("%s: writing dark.fits" % (name))
     global _darkdata
     _darkdata = data
-    astropy.io.fits.PrimaryHDU(data).writeto(
-        directorypath + "/dark.fits", overwrite=True
+    writeproduct(
+        directorypath + "/dark.fits", data
     )
     return
 
@@ -90,8 +90,8 @@ def writeflat(directorypath, data, filter, name="writeflat"):
     print("%s: writing flat-%s.fits" % (name, filter))
     global _flatdata
     _flatdata = data
-    astropy.io.fits.PrimaryHDU(data).writeto(
-        directorypath + ("/flat-%s.fits" % filter), overwrite=True
+    writeproduct(
+        directorypath + ("/flat-%s.fits" % filter), data, filter=filter
     )
     return
 
@@ -100,8 +100,8 @@ def writemask(directorypath, data, filter, name="writemask"):
     print("%s: writing mask-%s.fits" % (name, filter))
     global _maskdata
     _maskdata = data
-    astropy.io.fits.PrimaryHDU(data).writeto(
-        directorypath + ("/mask-%s.fits" % filter), overwrite=True
+    writeproduct(
+        directorypath + ("/mask-%s.fits" % filter), data, filter=filter
     )
     return
 
@@ -110,8 +110,8 @@ def writeobject(directorypath, data, filter, name="writeobject"):
     print("%s: writing object-%s.fits" % (name, filter))
     global _objectdata
     _objectdata = data
-    astropy.io.fits.PrimaryHDU(data).writeto(
-        directorypath + ("/object-%s.fits" % filter), overwrite=True
+    writeproduct(
+        directorypath + ("/object-%s.fits" % filter), data, filter=filter
     )
     return
 
@@ -331,7 +331,7 @@ def makeflatandmask(directorypath, filter):
 
     def makeflathelper():
         datalist = list(readoneflat(fitspath) for fitspath in fitspathlist)
-        print("makeflatandmask: averaging %d flats with rejectiqon." % (len(datalist)))
+        print("makeflatandmask: averaging %d flats with rejection." % (len(datalist)))
         mean, median, sigma = astropy.stats.sigma_clipped_stats(
             datalist, sigma=3, axis=0, cenfunc="median", stdfunc="mad_std"
         )
