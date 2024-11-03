@@ -140,17 +140,8 @@ def cook(
         print("%s: masking." % (name))
         data[np.where(_maskdata == 0)] = np.nan
 
-    if dowindow:
-        print("%s: windowing." % (name))
-        cx = 1996 / 2 + 30
-        cy = 2028 / 2 - 0
-        n = 512 * 3
-        sx = int(cx - n / 2)
-        sy = int(cy - n / 2)
-        data = data[sy : sy + n, sx : sx + n]
-
     median = np.nanmedian(data)
-    print("%s: median is %.1f DN." % (name, median))
+    print("%s: median in sample region is %.1f DN." % (name, median))
 
     if dosky:
         print("%s: subtracting sky." % (name))
@@ -169,6 +160,15 @@ def cook(
             data = np.rot90(data, +int(rotation / 90))
         else:
             data = np.rot90(data, -int(rotation / 90))
+
+    if dowindow:
+        print("%s: windowing." % (name))
+        cx = 1996 / 2 + 30
+        cy = 2028 / 2 - 0
+        n = 512 * 3
+        sx = int(cx - n / 2)
+        sy = int(cy - n / 2)
+        data = data[sy : sy + n, sx : sx + n]
 
     return data
 
