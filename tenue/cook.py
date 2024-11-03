@@ -1,8 +1,6 @@
 import os.path
 import numpy as np
 import scipy.ndimage
-import matplotlib.pyplot as plt
-
 
 import tenue.fits
 import tenue.image
@@ -223,14 +221,7 @@ def makebias(directorypath):
     sigma = tenue.image.clippedsigma(biasdata, sigma=3)
     print("makebias: final residual bias level is %.2f ± %.2f DN." % (mean, sigma))
 
-    print("makebias: plotting median of columns.")
-    plt.figure()
-    plt.plot(range(biasdata.shape[1]), np.nanmedian(biasdata, axis=0))
-    plt.show()
-    print("makebias: plotting median of rows.")
-    plt.figure()
-    plt.plot(range(biasdata.shape[0]), np.nanmedian(biasdata, axis=1))
-    plt.show()
+    tenue.image.show(biasdata, zscale=True)
 
     writebias(directorypath, biasdata, name="makebias")
 
@@ -265,14 +256,7 @@ def makedark(directorypath):
     sigma = tenue.image.clippedsigma(darkdata, sigma=3)
     print("makedark: final residual dark level is %.2f ± %.2f DN." % (mean, sigma))
 
-    print("makedark: plotting median of columns.")
-    plt.figure()
-    plt.plot(range(darkdata.shape[1]), np.nanmedian(darkdata, axis=0))
-    plt.show()
-    print("makedark: plotting median of rows.")
-    plt.figure()
-    plt.plot(range(darkdata.shape[0]), np.nanmedian(darkdata, axis=1))
-    plt.show()
+    tenue.image.show(darkdata, zscale=True)
 
     writedark(directorypath, darkdata, name="makebias")
 
@@ -350,6 +334,7 @@ def makeflatandmask(directorypath, filter):
 
     print("makeflatandmask: making real mask.")
     maskdata = makemaskhelper(flatdata)
+    tenue.image.show(maskdata, zrange=True)
 
     writemask(directorypath, maskdata, filter, name="makeflatandmask")
 
@@ -360,14 +345,7 @@ def makeflatandmask(directorypath, filter):
 
     writeflat(directorypath, flatdata, filter, name="makeflatandmask")
 
-    print("makeflatandmask: plotting median of columns.")
-    plt.figure()
-    plt.plot(range(flatdata.shape[1]), np.nanmedian(flatdata, axis=0))
-    plt.show()
-    print("makeflatandmask: plotting median of rows.")
-    plt.figure()
-    plt.plot(range(flatdata.shape[0]), np.nanmedian(flatdata, axis=1))
-    plt.show()
+    tenue.image.show(flatdata, zrange=True)
 
     print("makeflatandmask: finished.")
 
