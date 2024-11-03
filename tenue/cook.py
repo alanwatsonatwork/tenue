@@ -166,7 +166,10 @@ def cook(
     if dorotate:
         print("%s: rotating to standard orientation." % (name))
         rotation = header["SMTMRO"]
-        data = np.rot90(data, -int(rotation / 90))
+        if tenue.instrument.rotationpositive():
+            data = np.rot90(data, +int(rotation / 90))
+        else:
+            data = np.rot90(data, -int(rotation / 90))
 
     return data
 

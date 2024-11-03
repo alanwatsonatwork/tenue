@@ -27,7 +27,6 @@ def makeobject(
     nalignregion=40,
     refalpha=None,
     refdelta=None,
-    rotation=0,
     sigma=None,
     nwindow=None,
     showalignment=True,
@@ -94,6 +93,7 @@ def makeobject(
         alpha = math.radians(header[tenue.instrument.alphakeyword()])
         delta = math.radians(header[tenue.instrument.deltakeyword()])
         pixelscale = math.radians(tenue.instrument.pixelscale())
+        rotation = math.radians(tenue.instrument.rotation())
 
         print(
             "makeobject: pointing is alpha = %.5f deg delta = %.5f deg."
