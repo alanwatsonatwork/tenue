@@ -4,6 +4,8 @@ import astropy.stats
 import scipy.ndimage
 import matplotlib.pyplot as plt
 
+
+import tenue.instrument
 from tenue.fits import (
     readrawdata,
     readrawheader,
@@ -94,16 +96,6 @@ def writemask(directorypath, data, filter, name="writemask"):
     return
 
 
-overscanyslice = slice(11, 2058)
-overscanxslice = slice(1, 4)
-
-overscanyslice = slice(1, 10)
-overscanxslice = slice(18, 2065)
-
-trimyslice = slice(11, 2058)
-trimxslice = slice(18, 2065)
-
-
 def cook(
     fitspath,
     name="cook",
@@ -127,7 +119,9 @@ def cook(
 
     if dooverscan:
         # Converted from BIASSEC.
-        overscandata = data[overscanyslice, overscanxslice]
+        overscandata = data[
+            tenue.instrument.overscanyslice(), tenue.instrument.overscanxslice()
+        ]
         mean, median, sigma = astropy.stats.sigma_clipped_stats(
             overscandata, sigma=3, cenfunc="median", stdfunc="mad_std"
         )
@@ -137,7 +131,7 @@ def cook(
     if dotrim:
         # Converted from DATASEC.
         print("%s: trimming." % (name))
-        data = data[trimyslice, trimxslice]
+        data = data[tenue.instrument.trimyslice(), tenue.instrument.trimxslice()]
 
     if dobias:
         print("%s: subtracting bias." % (name))
