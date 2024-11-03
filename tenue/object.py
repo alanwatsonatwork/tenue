@@ -144,7 +144,7 @@ def makeobject(
         newdata[ylo:yhi, xlo:xhi] = data
         data = newdata
 
-        yc = int(data.shape[1] / 2)
+        yc = int(data.shape[0] / 2)
         xc = int(data.shape[1] / 2)
         ys = int(yc - nwindow / 2)
         xs = int(xc - nwindow / 2)
