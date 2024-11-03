@@ -1,13 +1,13 @@
 import math
 import os.path
 import numpy as np
-import astropy.stats
 import matplotlib.pyplot as plt
 
-import tenue.path
-import tenue.fits
 import tenue.cook
+import tenue.fits
+import tenue.image
 import tenue.instrument
+import tenue.path
 
 
 def writeobject(directorypath, data, filter, name="writeobject"):
@@ -176,11 +176,7 @@ def makeobject(
     if doskyimage:
         skystack = np.array(list(readonesky(fitspath) for fitspath in fitspathlist))
         print("makeobject: making sky image.")
-        mean, median, sigma = astropy.stats.sigma_clipped_stats(
-            skystack, sigma=3, axis=0, cenfunc="median", stdfunc="mad_std"
-        )
-        sky = mean
-        # sky = np.nanmedian(skystack, axis=0)
+        sky = tenue.image.clippedmean(skystack, sigma=3, axis=0)
     else:
         sky = 0
 
@@ -191,15 +187,12 @@ def makeobject(
             "makeobject: averaging %d object files without rejection."
             % len(objectstack)
         )
-        mean = np.average(objectstack, axis=0)
+        object = np.average(objectstack, axis=0)
     else:
         print(
             "makeobject: averaging %d object files with rejection." % len(objectstack)
         )
-        mean, median, sigma = astropy.stats.sigma_clipped_stats(
-            objectstack, sigma=10, axis=0, cenfunc="median", stdfunc="mad_std"
-        )
-    object = mean
+        object = tenue.image.clippedmean(objectstack, sigma=10, axis=0)
 
     writeobject(directorypath, object, filter, name="makeobject")
 
