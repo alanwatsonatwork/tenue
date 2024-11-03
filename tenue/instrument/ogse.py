@@ -1,6 +1,7 @@
 import tenue.instrument
 
 tenue.instrument.setvalues(
+    datamax = 65535,
     overscanyslice=slice(1, 10),
     overscanxslice=slice(18, 2065),
     trimyslice=slice(11, 2058),
