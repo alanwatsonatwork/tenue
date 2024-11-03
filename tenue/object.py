@@ -4,9 +4,9 @@ import numpy as np
 import astropy.stats
 import matplotlib.pyplot as plt
 
-from tenue.path import getrawfitspaths
-from tenue.fits import writeproduct, readrawheader, readrawdata
-from tenue.cook import cook
+import tenue.path
+import tenue.fits
+import tenue.cook
 import tenue.instrument
 
 
@@ -14,7 +14,9 @@ def writeobject(directorypath, data, filter, name="writeobject"):
     print("%s: writing object-%s.fits" % (name, filter))
     global _objectdata
     _objectdata = data
-    writeproduct(directorypath + ("/object-%s.fits" % filter), data, filter=filter)
+    tenue.fits.writeproduct(
+        directorypath + ("/object-%s.fits" % filter), data, filter=filter
+    )
     return
 
 
@@ -32,7 +34,7 @@ def makeobject(
     doskyimage=False,
 ):
     def readonepointing(fitspath):
-        header = readrawheader(fitspath)
+        header = tenue.fits.readrawheader(fitspath)
         print(
             "makeobject: reading pointing for %s object file %s."
             % (filter, os.path.basename(fitspath))
@@ -51,7 +53,7 @@ def makeobject(
             "makeobject: reading %s sky file %s." % (filter, os.path.basename(fitspath))
         )
 
-        data = cook(
+        data = tenue.cook.cook(
             fitspath,
             name="makeobject",
             dooverscan=True,
@@ -73,7 +75,7 @@ def makeobject(
             % (filter, os.path.basename(fitspath))
         )
 
-        data = cook(
+        data = tenue.cook.cook(
             fitspath,
             name="makeobject",
             dooverscan=True,
@@ -87,18 +89,18 @@ def makeobject(
         )
         data -= sky
 
-        header = readrawheader(fitspath)
+        header = tenue.fits.readrawheader(fitspath)
 
         alpha = math.radians(header[tenue.instrument.alphakeyword()])
         delta = math.radians(header[tenue.instrument.deltakeyword()])
-        scale = math.radians(tenue.instrument.scale())
+        pixelscale = math.radians(tenue.instrument.pixelscale())
 
         print(
             "makeobject: pointing is alpha = %.5f deg delta = %.5f deg."
             % (math.degrees(alpha), math.degrees(delta))
         )
-        dalpha = (alpha - refalpha) / scale * math.cos(refdelta)
-        ddelta = (delta - refdelta) / scale
+        dalpha = (alpha - refalpha) / pixelscale * math.cos(refdelta)
+        ddelta = (delta - refdelta) / pixelscale
         dx = int(np.round(dalpha * math.cos(rotation) - ddelta * math.sin(rotation)))
         dy = -int(np.round(dalpha * math.sin(rotation) + ddelta * math.cos(rotation)))
         print("makeobject: raw offset is dx = %+d px dy = %+d px." % (dx, dy))
@@ -155,7 +157,7 @@ def makeobject(
 
     print("makeobject: making %s object from %s." % (filter, directorypath))
 
-    fitspathlist = getrawfitspaths(directorypath + "/object/", filter=filter)
+    fitspathlist = tenue.path.getrawfitspaths(directorypath + "/object/", filter=filter)
     if len(fitspathlist) == 0:
         print("ERROR: no object files found.")
         return
