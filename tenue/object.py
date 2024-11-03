@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from tenue.path import getrawfitspaths
 from tenue.fits import writeproduct, readrawheader, readrawdata
 from tenue.cook import cook
+import tenue.instrument
 
 
 def writeobject(directorypath, data, filter, name="writeobject"):
@@ -36,8 +37,8 @@ def makeobject(
             "makeobject: reading pointing for %s object file %s."
             % (filter, os.path.basename(fitspath))
         )
-        alpha = math.radians(header[alphakeyword])
-        delta = math.radians(header[deltakeyword])
+        alpha = math.radians(header[tenue.instrument.alphakeyword()])
+        delta = math.radians(header[tenue.instrument.deltakeyword()])
         print(
             "makeobject: pointing is alpha = %.5f deg delta = %.5f deg."
             % (math.degrees(alpha), math.degrees(delta))
@@ -88,8 +89,10 @@ def makeobject(
 
         header = readrawheader(fitspath)
 
-        alpha = math.radians(header[alphakeyword])
-        delta = math.radians(header[deltakeyword])
+        alpha = math.radians(header[tenue.instrument.alphakeyword()])
+        delta = math.radians(header[tenue.instrument.deltakeyword()])
+        scale = math.radians(tenue.instrument.scale())
+
         print(
             "makeobject: pointing is alpha = %.5f deg delta = %.5f deg."
             % (math.degrees(alpha), math.degrees(delta))
@@ -149,10 +152,6 @@ def makeobject(
         data -= np.nanmedian(data, keepdims=True)
 
         return data
-
-    scale = math.radians(0.40 / 3600)
-    alphakeyword = "SMTMRA"
-    deltakeyword = "SMTMDE"
 
     print("makeobject: making %s object from %s." % (filter, directorypath))
 
