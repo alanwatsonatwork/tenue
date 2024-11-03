@@ -86,7 +86,7 @@ def makeobject(
             dosky=True,
             dorotate=True,
         )
-        data -= sky
+        data -= skydata
 
         header = tenue.fits.readrawheader(fitspath)
 
@@ -131,9 +131,7 @@ def makeobject(
             dy += ddy
             print("makeobject: refined offset is dx = %+d px dy = %+d px." % (dx, dy))
             if showalignment:
-                plt.figure()
-                plt.imshow(aligndata, origin="lower")
-                plt.show()
+                tenue.image.show(aligndata, contrast=0.05)
 
         datashape = np.array(data.shape)
         newdata = np.full(datashape + 2 * margin, np.nan, dtype=float)
@@ -176,9 +174,10 @@ def makeobject(
     if doskyimage:
         skystack = np.array(list(readonesky(fitspath) for fitspath in fitspathlist))
         print("makeobject: making sky image.")
-        sky = tenue.image.clippedmean(skystack, sigma=3, axis=0)
+        skydata = tenue.image.clippedmean(skystack, sigma=3, axis=0)
+        tenue.image.show(skydata, zscale=True)
     else:
-        sky = 0
+        skydata = 0
 
     objectstack = np.array(list(readoneobject(fitspath) for fitspath in fitspathlist))
 
@@ -187,15 +186,17 @@ def makeobject(
             "makeobject: averaging %d object files without rejection."
             % len(objectstack)
         )
-        object = np.average(objectstack, axis=0)
+        objectdata = np.average(objectstack, axis=0)
     else:
         print(
             "makeobject: averaging %d object files with rejection." % len(objectstack)
         )
-        object = tenue.image.clippedmean(objectstack, sigma=10, axis=0)
+        objectdata = tenue.image.clippedmean(objectstack, sigma=10, axis=0)
 
-    writeobject(directorypath, object, filter, name="makeobject")
+    tenue.image.show(objectdata, zscale=True, contrast=0.1)
+
+    writeobject(directorypath, objectdata, filter, name="makeobject")
 
     print("makeobject: finished.")
 
-    return object
+    return
