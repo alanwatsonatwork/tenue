@@ -1,11 +1,11 @@
 import os.path
 import numpy as np
-import astropy.stats
 import scipy.ndimage
 import matplotlib.pyplot as plt
 
 
 import tenue.fits
+import tenue.image
 import tenue.instrument
 import tenue.path
 
@@ -119,9 +119,10 @@ def cook(
         overscandata = data[
             tenue.instrument.overscanyslice(), tenue.instrument.overscanxslice()
         ]
-        mean, median, sigma = astropy.stats.sigma_clipped_stats(
-            overscandata, sigma=3, cenfunc="median", stdfunc="mad_std"
-        )
+        mean = tenue.image.clippedmean(overscandata, sigma=3)
+        mean = tenue.image.clippedmean(overscandata, sigma=3)
+        mean = tenue.image.clippedmean(overscandata, sigma=3)
+        sigma = tenue.image.clippedsigma(overscandata, sigma=3)
         print("%s: removing overscan level of %.2f ± %.2f DN." % (name, mean, sigma))
         data -= mean
 
@@ -216,14 +217,10 @@ def makebias(directorypath):
         return
 
     print("makebias: averaging %d biases with rejection." % len(datalist))
-    mean, median, sigma = astropy.stats.sigma_clipped_stats(
-        datalist, sigma=3, axis=0, cenfunc="median", stdfunc="mad_std"
-    )
-    biasdata = mean
+    biasdata = tenue.image.clippedmean(datalist, sigma=3, axis=0)
 
-    mean, median, sigma = astropy.stats.sigma_clipped_stats(
-        biasdata, sigma=5, cenfunc="median", stdfunc="mad_std"
-    )
+    mean = tenue.image.clippedmean(biasdata, sigma=3)
+    sigma = tenue.image.clippedsigma(biasdata, sigma=3)
     print("makebias: final residual bias level is %.2f ± %.2f DN." % (mean, sigma))
 
     print("makebias: plotting median of columns.")
@@ -262,14 +259,10 @@ def makedark(directorypath):
         return
 
     print("makedark: averaging %d darks with rejection." % len(datalist))
-    mean, median, sigma = astropy.stats.sigma_clipped_stats(
-        datalist, sigma=3, axis=0, cenfunc="median", stdfunc="mad_std"
-    )
-    darkdata = mean
+    darkdata = tenue.image.clippedmean(datalist, sigma=3, axis=0)
 
-    mean, median, sigma = astropy.stats.sigma_clipped_stats(
-        darkdata, sigma=5, cenfunc="median", stdfunc="mad_std"
-    )
+    mean = tenue.image.clippedmean(darkdata, sigma=3)
+    sigma = tenue.image.clippedsigma(darkdata, sigma=3)
     print("makedark: final residual dark level is %.2f ± %.2f DN." % (mean, sigma))
 
     print("makedark: plotting median of columns.")
@@ -303,10 +296,7 @@ def makeflatandmask(directorypath, filter):
     def makeflathelper():
         datalist = list(readoneflat(fitspath) for fitspath in fitspathlist)
         print("makeflatandmask: averaging %d flats with rejection." % (len(datalist)))
-        mean, median, sigma = astropy.stats.sigma_clipped_stats(
-            datalist, sigma=3, axis=0, cenfunc="median", stdfunc="mad_std"
-        )
-        flatdata = mean
+        flatdata = tenue.image.clippedmean(datalist, sigma=3, axis=0)
         return flatdata
 
     def makemaskhelper(flatdata):
