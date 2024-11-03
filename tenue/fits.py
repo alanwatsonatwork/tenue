@@ -31,22 +31,32 @@ def readrawdata(fitspath, name=None):
     if name is not None:
         print("%s: reading data from raw file %s." % (name, os.path.basename(fitspath)))
     hdu = astropy.io.fits.open(fitspath)
-    return np.array(hdu[_ihdu(fitspath)].data, dtype=np.float32)
+    data = np.array(hdu[_ihdu(fitspath)].data, dtype=np.float32)
+    hdu.close()
+    return data
+
 
 def readproductheader(fitspath, name=None):
     if name is not None:
         print(
-            "%s: reading header from product file %s." % (name, os.path.basename(fitspath))
+            "%s: reading header from product file %s."
+            % (name, os.path.basename(fitspath))
         )
     hdu = astropy.io.fits.open(fitspath)
-    return hdu[_ihdu(fitspath)].header
+    header = hdu[_ihdu(fitspath)].header
+    hdu.close()
+    return header
 
 
 def readproductdata(fitspath, name=None):
     if name is not None:
-        print("%s: reading data from product file %s." % (name, os.path.basename(fitspath)))
+        print(
+            "%s: reading data from product file %s."
+            % (name, os.path.basename(fitspath))
+        )
     hdu = astropy.io.fits.open(fitspath)
     return np.array(hdu[_ihdu(fitspath)].data, dtype=np.float32)
+
 
 def writeproduct(fitspath, data, name=None, filter=None):
     if name is not None:
@@ -54,7 +64,5 @@ def writeproduct(fitspath, data, name=None, filter=None):
     header = astropy.io.fits.Header()
     if filter is not None:
         header.append(("FILTER", filter))
-    astropy.io.fits.writeto(
-        fitspath, data, header, overwrite=True
-    )
+    astropy.io.fits.writeto(fitspath, data, header, overwrite=True)
     return
