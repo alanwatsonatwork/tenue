@@ -1,7 +1,7 @@
 import glob
 import os.path
 
-from tenue.fits import readrawheader
+import tenue.fits
 import tenue.instrument
 
 
@@ -16,5 +16,6 @@ def getrawfitspaths(directorypath, filter=None):
         return list(
             fitspath
             for fitspath in fitspaths
-            if readrawheader(fitspath)[tenue.instrument.filterkeyword()] == filter
+            if tenue.fits.readrawheader(fitspath)[tenue.instrument.filterkeyword()]
+            == filter
         )

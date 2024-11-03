@@ -1,6 +1,3 @@
-print("instrument")
-
-
 def setvalues(
     datamax=None,
     overscanyslice=None,

@@ -5,15 +5,9 @@ import scipy.ndimage
 import matplotlib.pyplot as plt
 
 
+import tenue.fits
 import tenue.instrument
-from tenue.fits import (
-    readrawdata,
-    readrawheader,
-    readproductdata,
-    readproductheader,
-    writeproduct,
-)
-from tenue.path import getrawfitspaths
+import tenue.path
 
 
 def readbias(directorypath, name="readbias"):
@@ -21,7 +15,7 @@ def readbias(directorypath, name="readbias"):
     path = directorypath + "/bias.fits"
     if os.path.exists(path):
         print("%s: reading bias.fits" % (name))
-        _biasdata = readproductdata(path)
+        _biasdata = tenue.fits.readproductdata(path)
     else:
         print("%s: WARNING: no bias found; using a fake bias." % (name))
         makefakebias()
@@ -33,7 +27,7 @@ def readdark(directorypath, name="readdark"):
     path = directorypath + "/dark.fits"
     if os.path.exists(path):
         print("%s: reading dark.fits" % (name))
-        _darkdata = readproductdata(path)
+        _darkdata = tenue.fits.readproductdata(path)
     else:
         print("%s: WARNING: no dark found; using a fake dark." % (name))
         makefakedark()
@@ -45,7 +39,7 @@ def readflat(directorypath, filter, name="readflat"):
     path = directorypath + ("/flat-%s.fits" % filter)
     if os.path.exists(path):
         print("%s: reading flat-%s.fits" % (name, filter))
-        _flatdata = readproductdata(path)
+        _flatdata = tenue.fits.readproductdata(path)
     else:
         print("%s: WARNING: no flat found; using a fake flat." % (name))
         makefakeflat()
@@ -57,7 +51,7 @@ def readmask(directorypath, filter, name="readmask"):
     path = directorypath + ("/mask-%s.fits" % filter)
     if os.path.exists(path):
         print("%s: reading mask-%s.fits" % (name, filter))
-        _maskdata = readproductdata(path)
+        _maskdata = tenue.fits.readproductdata(path)
     else:
         print("%s: WARNING: no mask found; using a fake mask." % (name))
         makefakemask()
@@ -68,7 +62,7 @@ def writebias(directorypath, data, name="writebias"):
     print("%s: writing bias.fits" % (name))
     global _biasdata
     _biasdata = data
-    writeproduct(directorypath + "/bias.fits", data)
+    tenue.fits.writeproduct(directorypath + "/bias.fits", data)
     return
 
 
@@ -76,7 +70,7 @@ def writedark(directorypath, data, name="writebias"):
     print("%s: writing dark.fits" % (name))
     global _darkdata
     _darkdata = data
-    writeproduct(directorypath + "/dark.fits", data)
+    tenue.fits.writeproduct(directorypath + "/dark.fits", data)
     return
 
 
@@ -84,7 +78,9 @@ def writeflat(directorypath, data, filter, name="writeflat"):
     print("%s: writing flat-%s.fits" % (name, filter))
     global _flatdata
     _flatdata = data
-    writeproduct(directorypath + ("/flat-%s.fits" % filter), data, filter=filter)
+    tenue.fits.writeproduct(
+        directorypath + ("/flat-%s.fits" % filter), data, filter=filter
+    )
     return
 
 
@@ -92,7 +88,9 @@ def writemask(directorypath, data, filter, name="writemask"):
     print("%s: writing mask-%s.fits" % (name, filter))
     global _maskdata
     _maskdata = data
-    writeproduct(directorypath + ("/mask-%s.fits" % filter), data, filter=filter)
+    tenue.fits.writeproduct(
+        directorypath + ("/mask-%s.fits" % filter), data, filter=filter
+    )
     return
 
 
@@ -111,8 +109,8 @@ def cook(
 ):
 
     print("%s: reading file %s." % (name, os.path.basename(fitspath)))
-    header = readrawheader(fitspath)
-    data = readrawdata(fitspath)
+    header = tenue.fits.readrawheader(fitspath)
+    data = tenue.fits.readrawdata(fitspath)
 
     # Set invalid pixels to nan.
     data[np.where(data == tenue.instrument.datamax())] = np.nan
@@ -203,7 +201,7 @@ def makebias(directorypath):
 
     print("makebias: making bias.fits from %s." % (directorypath))
 
-    fitspathlist = getrawfitspaths(directorypath + "/bias/")
+    fitspathlist = tenue.path.getrawfitspaths(directorypath + "/bias/")
     if len(fitspathlist) == 0:
         print("ERROR: no bias files found.")
         return
@@ -249,7 +247,7 @@ def makedark(directorypath):
 
     print("makedark: making dark.fits from %s." % (directorypath))
 
-    fitspathlist = getrawfitspaths(directorypath + "/dark/")
+    fitspathlist = tenue.path.getrawfitspaths(directorypath + "/dark/")
     if len(fitspathlist) == 0:
         print("ERROR: no dark files found.")
         return
@@ -344,7 +342,7 @@ def makeflatandmask(directorypath, filter):
 
     print("makeflatandmask: making %s flat from %s." % (filter, directorypath))
 
-    fitspathlist = getrawfitspaths(directorypath + "/flat/", filter=filter)
+    fitspathlist = tenue.path.getrawfitspaths(directorypath + "/flat/", filter=filter)
     if len(fitspathlist) == 0:
         print("ERROR: no flat files found.")
         return
