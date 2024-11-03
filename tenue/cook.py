@@ -114,11 +114,10 @@ def cook(
     header = readrawheader(fitspath)
     data = readrawdata(fitspath)
 
-    # Set saturated pixels to nan.
-    data[np.where(data == (2**16 - 1))] = np.nan
+    # Set invalid pixels to nan.
+    data[np.where(data == tenue.instrument.datamax())] = np.nan
 
     if dooverscan:
-        # Converted from BIASSEC.
         overscandata = data[
             tenue.instrument.overscanyslice(), tenue.instrument.overscanxslice()
         ]
@@ -129,7 +128,6 @@ def cook(
         data -= mean
 
     if dotrim:
-        # Converted from DATASEC.
         print("%s: trimming." % (name))
         data = data[tenue.instrument.trimyslice(), tenue.instrument.trimxslice()]
 

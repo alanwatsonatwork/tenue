@@ -2,6 +2,7 @@ print("instrument")
 
 
 def setvalues(
+    datamax=None,
     overscanyslice=None,
     overscanxslice=None,
     trimyslice=None,
@@ -11,22 +12,37 @@ def setvalues(
     deltakeyword=None,
     pixelscale=None,
 ):
+
+    global _datamax
+    _datamax = datamax
+
     global _overscanyslice
     _overscanyslice = overscanyslice
+
     global _overscanxslice
     _overscanxslice = overscanxslice
+
     global _trimyslice
     _trimyslice = trimyslice
+
     global _trimxslice
     _trimxslice = trimxslice
+
     global _filterkeyword
     _filterkeyword = filterkeyword
+
     global _alphakeyword
     _alphakeyword = alphakeyword
+
     global _deltakeyword
     _deltakeyword = deltakeyword
+
     global _pixelscale
     _pixelscale = pixelscale
+
+
+def datamax():
+    return _datamax
 
 
 def overscanyslice():
