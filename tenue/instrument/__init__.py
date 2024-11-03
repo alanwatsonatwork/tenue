@@ -7,7 +7,10 @@ def setvalues(
     filterkeyword=None,
     alphakeyword=None,
     deltakeyword=None,
+    rotationkeyword=None,
     pixelscale=None,
+    rotation=None,
+    rotationpositive=None,
 ):
 
     global _datamax
@@ -34,8 +37,17 @@ def setvalues(
     global _deltakeyword
     _deltakeyword = deltakeyword
 
+    global _rotationkeyword
+    _rotationkeyword = rotationkeyword
+
     global _pixelscale
     _pixelscale = pixelscale
+
+    global _rotation
+    _rotation = rotation
+
+    global _rotationpositive
+    _rotationpositive = rotationpositive
 
 
 def datamax():
@@ -70,8 +82,17 @@ def deltakeyword():
     return _deltakeyword
 
 
+def rotationkeyword():
+    return _rotationkeyword
+
+
 def pixelscale():
     return _pixelscale
 
 
-print("instrument")
+def rotation():
+    return _rotation
+
+
+def rotationpositive():
+    return _rotationpositive

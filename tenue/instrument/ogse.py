@@ -9,5 +9,7 @@ tenue.instrument.setvalues(
     filterkeyword="FILTER",
     alphakeyword="SMTMRA",
     deltakeyword="SMTMDE",
+    rotationkeyword="SMTMRO",
     pixelscale=0.40 / 3600,
+    rotation=63.703,
 )
