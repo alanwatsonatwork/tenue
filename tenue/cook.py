@@ -310,13 +310,6 @@ def makeflatandmask(directorypath, filter):
 
         maskdata = np.ones(flatdata.shape)
 
-        print("makeflatandmask: masking hot pixels.")
-        darkmean, darksigma = tenue.image.clippedmeanandsigma(_darkdata, sigma=5)
-        n = 10
-        darklimit = darkmean + n * darksigma
-        print("makeflatandmask: %d-sigma limit for dark rate is %.2f DN." % (n, darklimit))
-        maskdata[np.where(_darkdata > darklimit)] = 0
-
         print("makeflatandmask: masking nan values.")
         maskdata[np.isnan(flatdata)] = 0
 
