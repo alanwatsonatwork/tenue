@@ -36,14 +36,15 @@ def clippedmeanandsigma(stack, sigma=3.0, axis=None):
     return mean, sigma
 
 
-def show(data, zrange=False, zscale=False, contrast=0.25):
+def show(data, zrange=False, zscale=False, contrast=0.25, zmin=None, zmax=None):
 
-    if zrange:
+    if zmin is not None and zmax is not None:
+        interval = astropy.visualization.ManualInterval(zmin, zmax)
+    elif zrange:
         interval = astropy.visualization.MinMaxInterval()
-        stretch = astropy.visualization.LinearStretch()
     else:
         interval = astropy.visualization.ZScaleInterval(contrast=contrast)
-        stretch = astropy.visualization.LinearStretch()
+    stretch = astropy.visualization.LinearStretch()
     norm = astropy.visualization.ImageNormalize(
         data, interval=interval, stretch=stretch
     )
