@@ -105,6 +105,7 @@ def cook(
     dooverscan=False,
     dotrim=False,
     dobias=False,
+    dodark=False,
     doflat=False,
     donormalize=False,
     domask=False,
@@ -138,6 +139,10 @@ def cook(
     if dobias:
         print("%s: subtracting bias." % (name))
         data -= _biasdata
+
+    if dodark:
+        print("%s: subtracting dark." % (name))
+        data -= _darkdata
 
     if doflat:
         print("%s: dividing by flat." % (name))
@@ -269,7 +274,7 @@ def makedark(directorypath):
 
     tenue.image.show(darkdata, zscale=True)
 
-    writedark(directorypath, darkdata, name="makebias")
+    writedark(directorypath, darkdata, name="makedark")
 
     print("makedark: finished.")
 
@@ -307,8 +312,9 @@ def makeflatandmask(directorypath, filter):
 
         print("makeflatandmask: masking hot pixels.")
         darkmean, darksigma = tenue.image.clippedmeanandsigma(_darkdata, sigma=5)
-        darklimit = darkmean + 5 * darksigma
-        print("makeflatandmask: 5-sigma limit for dark rate is %.2f DN." % darklimit)
+        n = 10
+        darklimit = darkmean + n * darksigma
+        print("makeflatandmask: %d-sigma limit for dark rate is %.2f DN." % (n, darklimit))
         maskdata[np.where(_darkdata > darklimit)] = 0
 
         print("makeflatandmask: masking nan values.")
