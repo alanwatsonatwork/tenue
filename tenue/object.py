@@ -163,7 +163,7 @@ def makeobject(
     print("makeobject: making %s object from %s." % (filter, directorypath))
 
     fitspathlist = tenue.path.getrawfitspaths(
-        directorypath + "/object/", filter=filter
+        directorypath, filter=filter
     )[:16]
     if len(fitspathlist) == 0:
         print("ERROR: no object files found.")
