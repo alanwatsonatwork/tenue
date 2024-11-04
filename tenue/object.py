@@ -66,13 +66,13 @@ def makeobject(
             dooverscan=True,
             dotrim=True,
             dobias=True,
+            dodark=True,
             doflat=True,
             domask=True,
-            dowindow=True,
+            dowindow=False,
             dosky=True,
             dorotate=True,
         )
-
         return data
 
     def readoneobject(fitspath):
@@ -88,13 +88,14 @@ def makeobject(
             dooverscan=True,
             dotrim=True,
             dobias=True,
+            dodark=True,
             doflat=True,
             domask=True,
-            dowindow=True,
+            dowindow=False,
             dosky=True,
             dorotate=True,
         )
-        data -= skydata
+        data -= _skydata
 
         header = tenue.fits.readrawheader(fitspath)
 
@@ -180,11 +181,13 @@ def makeobject(
     )
 
     if doskyimage:
-        skystack = np.array(list(readonesky(fitspath) for fitspath in fitspathlist))
+        skystack = list(readonesky(fitspath) for fitspath in fitspathlist)
         print("makeobject: making sky image.")
-        skydata = tenue.image.clippedmean(skystack, sigma=3, axis=0)
-        tenue.image.show(skydata, zscale=True)
-        writesky(directorypath, skydata, filter, name="makeobject")
+        skymean, skysigma = tenue.image.clippedmeanandsigma(skystack, sigma=3, axis=0)
+        sigma = tenue.image.clippedmean(skysigma, sigma=3) / math.sqrt(len(fitspathlist))
+        print("makeobject: estimated noise in sky image is %.2f." % sigma)
+        tenue.image.show(skymean, zscale=True)
+        writesky(directorypath, skymean, filter, name="makeobject")
     else:
         skydata = 0
 
