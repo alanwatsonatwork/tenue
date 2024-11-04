@@ -15,11 +15,11 @@ _darkdata = None
 _flatdata = None
 _maskdata = None
 
-def readbias(directorypath, name="readbias"):
+
+def readbias(path="bias.fits", name="readbias"):
     global _biasdata
-    path = directorypath + "/bias.fits"
     if os.path.exists(path):
-        print("%s: reading bias.fits" % (name))
+        print("%s: reading %s." % (name, path))
         _biasdata = tenue.fits.readproductdata(path)
     else:
         print("%s: WARNING: no bias found; using a fake bias." % (name))
@@ -27,11 +27,10 @@ def readbias(directorypath, name="readbias"):
     return _biasdata
 
 
-def readdark(directorypath, name="readdark"):
+def readdark(path="dark.fits", name="readdark"):
     global _darkdata
-    path = directorypath + "/dark.fits"
     if os.path.exists(path):
-        print("%s: reading dark.fits" % (name))
+        print("%s: reading %s." % (name, path))
         _darkdata = tenue.fits.readproductdata(path)
     else:
         print("%s: WARNING: no dark found; using a fake dark." % (name))
@@ -39,11 +38,10 @@ def readdark(directorypath, name="readdark"):
     return _darkdata
 
 
-def readflat(directorypath, filter, name="readflat"):
+def readflat(path="flat.fits", name="readflat"):
     global _flatdata
-    path = directorypath + ("/flat-%s.fits" % filter)
     if os.path.exists(path):
-        print("%s: reading flat-%s.fits" % (name, filter))
+        print("%s: reading %s." % (name, path))
         _flatdata = tenue.fits.readproductdata(path)
     else:
         print("%s: WARNING: no flat found; using a fake flat." % (name))
@@ -51,11 +49,10 @@ def readflat(directorypath, filter, name="readflat"):
     return _flatdata
 
 
-def readmask(directorypath, filter, name="readmask"):
+def readmask(path="mask.fits", name="readmask"):
     global _maskdata
-    path = directorypath + ("/mask-%s.fits" % filter)
     if os.path.exists(path):
-        print("%s: reading mask-%s.fits" % (name, filter))
+        print("%s: reading %s." % (name, path))
         _maskdata = tenue.fits.readproductdata(path)
     else:
         print("%s: WARNING: no mask found; using a fake mask." % (name))
@@ -63,39 +60,35 @@ def readmask(directorypath, filter, name="readmask"):
     return _maskdata
 
 
-def writebias(directorypath, data, name="writebias"):
-    print("%s: writing bias.fits" % (name))
+def writebias(data, path="bias.fits", name="writebias"):
+    print("%s: writing %s." % (name, path))
     global _biasdata
     _biasdata = data
-    tenue.fits.writeproduct(directorypath + "/bias.fits", data)
+    tenue.fits.writeproduct(path, data)
     return
 
 
-def writedark(directorypath, data, name="writebias"):
-    print("%s: writing dark.fits" % (name))
+def writedark(data, path="dark.fits", name="writebias"):
+    print("%s: writing %s." % (name, path))
     global _darkdata
     _darkdata = data
-    tenue.fits.writeproduct(directorypath + "/dark.fits", data)
+    tenue.fits.writeproduct(path, data)
     return
 
 
-def writeflat(directorypath, data, filter, name="writeflat"):
-    print("%s: writing flat-%s.fits" % (name, filter))
+def writeflat(data, path="flat.fits", filter=None, name="writeflat"):
+    print("%s: writing %s." % (name, path))
     global _flatdata
     _flatdata = data
-    tenue.fits.writeproduct(
-        directorypath + ("/flat-%s.fits" % filter), data, filter=filter
-    )
+    tenue.fits.writeproduct(path, data, filter=filter)
     return
 
 
-def writemask(directorypath, data, filter, name="writemask"):
-    print("%s: writing mask-%s.fits" % (name, filter))
+def writemask(data, path="mask.fits", filter=None, name="writemask"):
+    print("%s: writing %s." % (name, path))
     global _maskdata
     _maskdata = data
-    tenue.fits.writeproduct(
-        directorypath + ("/mask-%s.fits" % filter), data, filter=filter
-    )
+    tenue.fits.writeproduct(path, data, filter=filter)
     return
 
 
@@ -213,7 +206,7 @@ def makebias(directorypath):
     def readonebias(fitspath):
         return cook(fitspath, name="makebias", dooverscan=True, dotrim=True)
 
-    print("makebias: making bias.fits from %s." % (directorypath))
+    print("makebias: making bias from %s." % (directorypath))
 
     fitspathlist = tenue.path.getrawfitspaths(directorypath + "/bias/")
     if len(fitspathlist) == 0:
@@ -228,7 +221,7 @@ def makebias(directorypath):
 
     print("makebias: averaging %d biases with rejection." % len(datalist))
     biasdata, biassigma = tenue.image.clippedmeanandsigma(datalist, sigma=3, axis=0)
-    
+
     mean, sigma = tenue.image.clippedmeanandsigma(biasdata, sigma=5)
     print("makebias: bias is %.2f ± %.2f DN." % (mean, sigma))
 
@@ -237,7 +230,7 @@ def makebias(directorypath):
 
     tenue.image.show(biasdata, zscale=True)
 
-    writebias(directorypath, biasdata, name="makebias")
+    writebias(biasdata, name="makebias")
 
     print("makebias: finished.")
 
@@ -250,7 +243,7 @@ def makedark(directorypath):
             fitspath, name="makedark", dooverscan=True, dotrim=True, dobias=True
         )
 
-    print("makedark: making dark.fits from %s." % (directorypath))
+    print("makedark: making dark from %s." % (directorypath))
 
     fitspathlist = tenue.path.getrawfitspaths(directorypath + "/dark/")
     if len(fitspathlist) == 0:
@@ -274,7 +267,7 @@ def makedark(directorypath):
 
     tenue.image.show(darkdata, zscale=True)
 
-    writedark(directorypath, darkdata, name="makedark")
+    writedark(darkdata, name="makedark")
 
     print("makedark: finished.")
 
@@ -337,14 +330,12 @@ def makeflatandmask(directorypath, filter):
 
         return maskdata
 
-    print("makeflatandmask: making %s flat from %s." % (filter, directorypath))
+    print("makeflatandmask: making %s flat and mask from %s." % (filter, directorypath))
 
     fitspathlist = tenue.path.getrawfitspaths(directorypath + "/flat/", filter=filter)
     if len(fitspathlist) == 0:
         print("ERROR: no flat files found.")
         return
-
-    readbias(directorypath, name="makeflatandmask")
 
     print("makeflatandmask: making fake mask.")
     makefakemask()
@@ -356,14 +347,12 @@ def makeflatandmask(directorypath, filter):
     maskdata = makemaskhelper(flatdata)
     tenue.image.show(maskdata, zrange=True)
 
-    writemask(directorypath, maskdata, filter, name="makeflatandmask")
-
-    readmask(directorypath, filter, name="makeflatandmask")
+    writemask(maskdata, "mask-%s.fits" % filter, filter=filter, name="makeflatandmask")
 
     print("makeflatandmask: making flat with real mask.")
     flatdata = makeflathelper()
 
-    writeflat(directorypath, flatdata, filter, name="makeflatandmask")
+    writeflat(flatdata, "flat-%s.fits" % filter, filter=filter, name="makeflatandmask")
 
     tenue.image.show(flatdata, zrange=True)
 

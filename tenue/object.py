@@ -11,20 +11,18 @@ import tenue.path
 
 _skydata = None
 
-def writeobject(directorypath, data, filter, name="writeobject"):
-    print("%s: writing object-%s.fits" % (name, filter))
-    tenue.fits.writeproduct(
-        directorypath + ("/object-%s.fits" % filter), data, filter=filter
-    )
+
+def writeobject(data, path, filter=None, name="writeobject"):
+    print("%s: writing %s." % (name, path))
+    tenue.fits.writeproduct(path, data, filter=filter)
     return
 
-def writesky(directorypath, data, filter, name="writesky"):
-    print("%s: writing sky-%s.fits" % (name, filter))
+
+def writesky(data, path, filter=None, name="writesky"):
+    print("%s: writing %s." % (name, path))
     global _skydata
     _skydata = data
-    tenue.fits.writeproduct(
-        directorypath + ("/sky-%s.fits" % filter), data, filter=filter
-    )
+    tenue.fits.writeproduct(path, data, filter=filter)
     return
 
 
@@ -164,7 +162,9 @@ def makeobject(
 
     print("makeobject: making %s object from %s." % (filter, directorypath))
 
-    fitspathlist = tenue.path.getrawfitspaths(directorypath + "/object/", filter=filter)
+    fitspathlist = tenue.path.getrawfitspaths(
+        directorypath + "/object/", filter=filter
+    )[:16]
     if len(fitspathlist) == 0:
         print("ERROR: no object files found.")
         return
@@ -184,10 +184,13 @@ def makeobject(
         skystack = list(readonesky(fitspath) for fitspath in fitspathlist)
         print("makeobject: making sky image.")
         skymean, skysigma = tenue.image.clippedmeanandsigma(skystack, sigma=3, axis=0)
-        sigma = tenue.image.clippedmean(skysigma, sigma=3) / math.sqrt(len(fitspathlist))
+        sigma = tenue.image.clippedmean(skysigma, sigma=3) / math.sqrt(
+            len(fitspathlist)
+        )
         print("makeobject: estimated noise in sky image is %.2f." % sigma)
-        tenue.image.show(skymean, zscale=True)
-        writesky(directorypath, skymean, filter, name="makeobject")
+        skymean[np.where(np.isnan(skymean))] = 0
+        tenue.image.show(skymean, zmin=-20, zmax=50)
+        writesky(skymean, "sky-%s.fits" % filter, filter=filter, name="makeobject")
     else:
         skydata = 0
 
@@ -207,7 +210,7 @@ def makeobject(
 
     tenue.image.show(objectdata, zscale=True, contrast=0.1)
 
-    writeobject(directorypath, objectdata, filter, name="makeobject")
+    writeobject(objectdata, "object-%s.fits" % filter, filter=filter, name="makeobject")
 
     print("makeobject: finished.")
 
