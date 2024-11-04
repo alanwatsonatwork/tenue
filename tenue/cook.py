@@ -1,5 +1,8 @@
+import math
 import os.path
+
 import numpy as np
+
 import scipy.ndimage
 
 import tenue.fits
@@ -215,11 +218,13 @@ def makebias(directorypath):
         return
 
     print("makebias: averaging %d biases with rejection." % len(datalist))
-    biasdata = tenue.image.clippedmean(datalist, sigma=3, axis=0)
+    biasdata, biassigma = tenue.image.clippedmeanandsigma(datalist, sigma=3, axis=0)
+    
+    mean, sigma = tenue.image.clippedmeanandsigma(biasdata, sigma=5)
+    print("makebias: bias is %.2f ± %.2f DN." % (mean, sigma))
 
-    mean = tenue.image.clippedmean(biasdata, sigma=3)
-    sigma = tenue.image.clippedsigma(biasdata, sigma=3)
-    print("makebias: final residual bias level is %.2f ± %.2f DN." % (mean, sigma))
+    sigma = tenue.image.clippedmean(biassigma, sigma=5) / math.sqrt(len(datalist))
+    print("makebias: estimated noise in bias is %.2f DN." % sigma)
 
     tenue.image.show(biasdata, zscale=True)
 
@@ -250,11 +255,13 @@ def makedark(directorypath):
         return
 
     print("makedark: averaging %d darks with rejection." % len(datalist))
-    darkdata = tenue.image.clippedmean(datalist, sigma=3, axis=0)
+    darkdata, darksigma = tenue.image.clippedmeanandsigma(datalist, sigma=3, axis=0)
 
-    mean = tenue.image.clippedmean(darkdata, sigma=3)
-    sigma = tenue.image.clippedsigma(darkdata, sigma=3)
-    print("makedark: final residual dark level is %.2f ± %.2f DN." % (mean, sigma))
+    mean, sigma = tenue.image.clippedmeanandsigma(darkdata, sigma=5)
+    print("makedark: dark is %.2f ± %.2f DN." % (mean, sigma))
+
+    sigma = tenue.image.clippedmean(darksigma, sigma=5) / math.sqrt(len(datalist))
+    print("makedark: estimated noise in dark is %.2f DN." % sigma)
 
     tenue.image.show(darkdata, zscale=True)
 
@@ -280,7 +287,14 @@ def makeflatandmask(directorypath, filter):
     def makeflathelper():
         datalist = list(readoneflat(fitspath) for fitspath in fitspathlist)
         print("makeflatandmask: averaging %d flats with rejection." % (len(datalist)))
-        flatdata = tenue.image.clippedmean(datalist, sigma=3, axis=0)
+        flatdata, flatsigma = tenue.image.clippedmeanandsigma(datalist, sigma=3, axis=0)
+
+        mean, sigma = tenue.image.clippedmeanandsigma(flatdata, sigma=5)
+        print("makeflatandmask: flat is %.2f ± %.2f DN." % (mean, sigma))
+
+        sigma = tenue.image.clippedmean(flatsigma, sigma=5) / math.sqrt(len(datalist))
+        print("makeflatandmask: estimated noise in flat is %.3f." % sigma)
+
         return flatdata
 
     def makemaskhelper(flatdata):
@@ -288,7 +302,10 @@ def makeflatandmask(directorypath, filter):
         maskdata = np.ones(flatdata.shape)
 
         print("makeflatandmask: masking hot pixels.")
-        maskdata[np.where(_darkdata > 200)] = 0
+        darkmean, darksigma = tenue.image.clippedmeanandsigma(_darkdata, sigma=5)
+        darklimit = darkmean + 5 * darksigma
+        print("makeflatandmask: 5-sigma limit for dark rate is %.2f DN." % darklimit)
+        maskdata[np.where(_darkdata > darklimit)] = 0
 
         print("makeflatandmask: masking nan values.")
         maskdata[np.isnan(flatdata)] = 0
