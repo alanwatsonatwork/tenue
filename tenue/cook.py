@@ -10,6 +10,10 @@ import tenue.image
 import tenue.instrument
 import tenue.path
 
+_biasdata = None
+_darkdata = None
+_flatdata = None
+_maskdata = None
 
 def readbias(directorypath, name="readbias"):
     global _biasdata
