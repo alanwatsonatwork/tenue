@@ -9,13 +9,21 @@ import tenue.image
 import tenue.instrument
 import tenue.path
 
+_skydata = None
 
 def writeobject(directorypath, data, filter, name="writeobject"):
     print("%s: writing object-%s.fits" % (name, filter))
-    global _objectdata
-    _objectdata = data
     tenue.fits.writeproduct(
         directorypath + ("/object-%s.fits" % filter), data, filter=filter
+    )
+    return
+
+def writesky(directorypath, data, filter, name="writesky"):
+    print("%s: writing sky-%s.fits" % (name, filter))
+    global _skydata
+    _skydata = data
+    tenue.fits.writeproduct(
+        directorypath + ("/sky-%s.fits" % filter), data, filter=filter
     )
     return
 
@@ -176,6 +184,7 @@ def makeobject(
         print("makeobject: making sky image.")
         skydata = tenue.image.clippedmean(skystack, sigma=3, axis=0)
         tenue.image.show(skydata, zscale=True)
+        writesky(directorypath, skydata, filter, name="makeobject")
     else:
         skydata = 0
 
