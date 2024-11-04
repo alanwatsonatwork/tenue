@@ -11,6 +11,7 @@ def setvalues(
     pixelscale=None,
     rotation=None,
     rotationpositive=None,
+    flatmax=None,
 ):
 
     global _datamax
@@ -48,6 +49,9 @@ def setvalues(
 
     global _rotationpositive
     _rotationpositive = rotationpositive
+
+    global _flatmax
+    _flatmax = flatmax
 
 
 def datamax():
@@ -96,3 +100,7 @@ def rotation():
 
 def rotationpositive():
     return _rotationpositive
+
+
+def flatmax():
+    return _flatmax

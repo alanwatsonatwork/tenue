@@ -104,7 +104,6 @@ def cook(
     dobias=False,
     dodark=False,
     doflat=False,
-    donormalize=False,
     domask=False,
     dosky=False,
     dowindow=False,
@@ -149,18 +148,12 @@ def cook(
         print("%s: masking." % (name))
         data[np.where(_maskdata == 0)] = np.nan
 
-    median = np.nanmedian(data)
-    print("%s: median in sample region is %.1f DN." % (name, median))
-
     if dosky:
-        print("%s: subtracting sky." % (name))
+        median = np.nanmedian(data)
+        print("%s: subtracting median sky of %.1f DN." % (name, median))
         # data -= np.nanmedian(data, axis=0, keepdims=True)
         # data -= np.nanmedian(data, axis=1, keepdims=True)
         data -= np.nanmedian(data, keepdims=True)
-
-    if donormalize:
-        print("%s: normalizing to median." % (name))
-        data /= median
 
     if dorotate:
         print("%s: rotating to standard orientation." % (name))
@@ -279,27 +272,40 @@ def makedark(directorypath):
 
 
 def makeflatandmask(directorypath, filter):
+
     def readoneflat(fitspath):
-        return cook(
+        data = cook(
             fitspath,
             name="makeflatandmask",
             dooverscan=True,
             dotrim=True,
             dobias=True,
             domask=True,
-            donormalize=True,
         )
+        if np.isnan(data).all():
+            print("makeflatandmask: rejecting image: no valid data.")
+            return None
+        median = np.nanmedian(data)
+        print("makeflatandmask: median is %.2f DN." % median)
+        if median > tenue.instrument.flatmax():
+            print("makeflatandmask: rejecting image: median too high.")
+            return None
+        else:
+            print("makeflatandmask: accepting image.")
+            data /= median
+            return data
 
     def makeflathelper():
         datalist = list(readoneflat(fitspath) for fitspath in fitspathlist)
+        datalist = list(data for data in datalist if data is not None)
         print("makeflatandmask: averaging %d flats with rejection." % (len(datalist)))
         flatdata, flatsigma = tenue.image.clippedmeanandsigma(datalist, sigma=3, axis=0)
 
         mean, sigma = tenue.image.clippedmeanandsigma(flatdata, sigma=5)
-        print("makeflatandmask: flat is %.2f ± %.2f DN." % (mean, sigma))
+        print("makeflatandmask: flat is %.2f ± %.3f." % (mean, sigma))
 
         sigma = tenue.image.clippedmean(flatsigma, sigma=5) / math.sqrt(len(datalist))
-        print("makeflatandmask: estimated noise in flat is %.3f." % sigma)
+        print("makeflatandmask: estimated noise in flat is %.4f." % sigma)
 
         return flatdata
 

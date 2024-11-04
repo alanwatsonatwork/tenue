@@ -12,4 +12,5 @@ tenue.instrument.setvalues(
     rotationkeyword="SMTMRO",
     pixelscale=0.40 / 3600,
     rotation=63.703,
+    flatmax=32000,
 )

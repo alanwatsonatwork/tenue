@@ -37,7 +37,7 @@ def makeobject(
     nwindow=None,
     showalignment=True,
     doskyimage=False,
-    skyclip=None
+    skyclip=None,
 ):
     def readonepointing(fitspath):
         header = tenue.fits.readrawheader(fitspath)
@@ -167,9 +167,7 @@ def makeobject(
 
     print("makeobject: making %s object from %s." % (filter, directorypath))
 
-    fitspathlist = tenue.path.getrawfitspaths(
-        directorypath, filter=filter
-    )
+    fitspathlist = tenue.path.getrawfitspaths(directorypath, filter=filter)
     if len(fitspathlist) == 0:
         print("ERROR: no object files found.")
         return
@@ -197,7 +195,8 @@ def makeobject(
         tenue.image.show(skymean, zmin=-20, zmax=50)
         writesky(skymean, "sky-%s.fits" % filter, filter=filter, name="makeobject")
     else:
-        skydata = 0
+        global _skydata
+        _skydata = 0
 
     objectstack = np.array(list(readoneobject(fitspath) for fitspath in fitspathlist))
 
@@ -211,11 +210,17 @@ def makeobject(
         print(
             "makeobject: averaging %d object files with rejection." % len(objectstack)
         )
-        objectdata = tenue.image.clippedmean(objectstack, sigma=10, axis=0)
+        objectmean, objectsigma = tenue.image.clippedmeanandsigma(
+            objectstack, sigma=10, axis=0
+        )
+        sigma = tenue.image.clippedmean(objectsigma, sigma=3) / math.sqrt(
+            len(fitspathlist)
+        )
+        print("makeobject: estimated noise in object image is %.2f." % sigma)
 
-    tenue.image.show(objectdata, zscale=True, contrast=0.1)
+    tenue.image.show(objectmean, zscale=True, contrast=0.1)
 
-    writeobject(objectdata, "object-%s.fits" % filter, filter=filter, name="makeobject")
+    writeobject(objectmean, "object-%s.fits" % filter, filter=filter, name="makeobject")
 
     print("makeobject: finished.")
 
