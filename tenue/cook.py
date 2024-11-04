@@ -212,7 +212,7 @@ def makebias(directorypath):
 
     print("makebias: making bias from %s." % (directorypath))
 
-    fitspathlist = tenue.path.getrawfitspaths(directorypath + "/bias/")
+    fitspathlist = tenue.path.getrawfitspaths(directorypath)
     if len(fitspathlist) == 0:
         print("ERROR: no bias files found.")
         return
@@ -249,7 +249,7 @@ def makedark(directorypath):
 
     print("makedark: making dark from %s." % (directorypath))
 
-    fitspathlist = tenue.path.getrawfitspaths(directorypath + "/dark/")
+    fitspathlist = tenue.path.getrawfitspaths(directorypath)
     if len(fitspathlist) == 0:
         print("ERROR: no dark files found.")
         return
@@ -336,7 +336,7 @@ def makeflatandmask(directorypath, filter):
 
     print("makeflatandmask: making %s flat and mask from %s." % (filter, directorypath))
 
-    fitspathlist = tenue.path.getrawfitspaths(directorypath + "/flat/", filter=filter)
+    fitspathlist = tenue.path.getrawfitspaths(directorypath, filter=filter)
     if len(fitspathlist) == 0:
         print("ERROR: no flat files found.")
         return
