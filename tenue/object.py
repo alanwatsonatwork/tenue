@@ -37,6 +37,7 @@ def makeobject(
     nwindow=None,
     showalignment=True,
     doskyimage=False,
+    skyclip=None
 ):
     def readonepointing(fitspath):
         header = tenue.fits.readrawheader(fitspath)
@@ -71,6 +72,10 @@ def makeobject(
             dosky=True,
             dorotate=True,
         )
+        if skyclip is not None:
+            data[np.where(data >= +skyclip)] = np.nan
+            data[np.where(data <= -skyclip)] = np.nan
+        tenue.image.show(data, zscale=True)
         return data
 
     def readoneobject(fitspath):
@@ -164,7 +169,7 @@ def makeobject(
 
     fitspathlist = tenue.path.getrawfitspaths(
         directorypath, filter=filter
-    )[:16]
+    )
     if len(fitspathlist) == 0:
         print("ERROR: no object files found.")
         return
