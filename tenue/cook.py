@@ -38,8 +38,10 @@ def readdark(path="dark.fits", name="readdark"):
     return _darkdata
 
 
-def readflat(path="flat.fits", name="readflat"):
+def readflat(filter=None, path="flat-%s.fits", name="readflat"):
     global _flatdata
+    if filter is not None and "%s" in path:
+        path = path % filter
     if os.path.exists(path):
         print("%s: reading %s." % (name, path))
         _flatdata = tenue.fits.readproductdata(path)
@@ -49,8 +51,10 @@ def readflat(path="flat.fits", name="readflat"):
     return _flatdata
 
 
-def readmask(path="mask.fits", name="readmask"):
+def readmask(filter=None, path="mask-%s.fits", name="readmask"):
     global _maskdata
+    if filter is not None and "%s" in path:
+        path = path % filter
     if os.path.exists(path):
         print("%s: reading %s." % (name, path))
         _maskdata = tenue.fits.readproductdata(path)
