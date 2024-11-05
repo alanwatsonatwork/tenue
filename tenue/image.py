@@ -6,6 +6,8 @@ import numpy as np
 import astropy.stats
 import astropy.visualization
 
+import scipy.ndimage
+
 import matplotlib.pyplot as plt
 
 
@@ -15,7 +17,7 @@ def clippedmean(stack, sigma=3.0, axis=None):
         mean, median, sigma = astropy.stats.sigma_clipped_stats(
             np.array(stack), sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
         )
-    return mean
+    return mean.astype("float32")
 
 
 def clippedsigma(stack, sigma=3.0, axis=None):
@@ -24,7 +26,7 @@ def clippedsigma(stack, sigma=3.0, axis=None):
         mean, median, sigma = astropy.stats.sigma_clipped_stats(
             np.array(stack), sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
         )
-    return sigma
+    return sigma.astype("float32")
 
 
 def clippedmeanandsigma(stack, sigma=3.0, axis=None):
@@ -33,7 +35,13 @@ def clippedmeanandsigma(stack, sigma=3.0, axis=None):
         mean, median, sigma = astropy.stats.sigma_clipped_stats(
             np.array(stack), sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
         )
-    return mean, sigma
+    return mean.astype("float32"), sigma.astype("float32")
+
+def medianfilter(data, size):
+     return scipy.ndimage.median_filter(data, size)
+
+def uniformfilter(data, size):
+    return scipy.ndimage.filters.uniform_filter(data, size=size, mode="nearest")
 
 
 def show(data, zrange=False, zscale=False, contrast=0.25, zmin=None, zmax=None):

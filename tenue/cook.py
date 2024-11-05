@@ -3,8 +3,6 @@ import os.path
 
 import numpy as np
 
-import scipy.ndimage
-
 import tenue.fits
 import tenue.image
 import tenue.instrument
@@ -63,38 +61,30 @@ def readmask(filter, path="mask-{filter}.fits", name="readmask"):
     return _maskdata
 
 
-def writebias(data, path="bias.fits", name="writebias"):
+def writebias(path="bias.fits", name="writebias"):
     print("%s: writing %s." % (name, path))
-    global _biasdata
-    _biasdata = data
-    tenue.fits.writeproduct(path, data)
+    tenue.fits.writeproduct(path, _biasdata)
     return
 
 
-def writedark(data, path="dark-{exposuretime:.0f}.fits", exposuretime=None, name="writebias"):
+def writedark(path="dark-{exposuretime:.0f}.fits", exposuretime=None, name="writebias"):
     path = path.format(exposuretime=exposuretime)
     print("%s: writing %s." % (name, path))
-    global _darkdata
-    _darkdata = data
-    tenue.fits.writeproduct(path, data)
+    tenue.fits.writeproduct(path, _darkdata)
     return
 
 
-def writeflat(data, path="flat-{filter}.fits", filter=None, name="writeflat"):
+def writeflat(path="flat-{filter}.fits", filter=None, name="writeflat"):
     path = path.format(filter=filter)
     print("%s: writing %s." % (name, path))
-    global _flatdata
-    _flatdata = data
-    tenue.fits.writeproduct(path, data, filter=filter)
+    tenue.fits.writeproduct(path, _flatdata, filter=filter)
     return
 
 
-def writemask(data, path="mask-{filter}.fits", filter=None, name="writemask"):
+def writemask(path="mask-{filter}.fits", filter=None, name="writemask"):
     path = path.format(filter=filter)
     print("%s: writing %s." % (name, path))
-    global _maskdata
-    _maskdata = data
-    tenue.fits.writeproduct(path, data, filter=filter)
+    tenue.fits.writeproduct(path, _maskdata, filter=filter)
     return
 
 
@@ -219,17 +209,18 @@ def makebias(directorypath, biaspath="bias.fits"):
         return
 
     print("makebias: averaging %d biases with rejection." % len(datalist))
-    biasdata, biassigma = tenue.image.clippedmeanandsigma(datalist, sigma=3, axis=0)
+    global _biasdata
+    _biasdata, biassigma = tenue.image.clippedmeanandsigma(datalist, sigma=3, axis=0)
 
-    mean, sigma = tenue.image.clippedmeanandsigma(biasdata, sigma=5)
+    mean, sigma = tenue.image.clippedmeanandsigma(_biasdata, sigma=5)
     print("makebias: bias is %.2f ± %.2f DN." % (mean, sigma))
 
     sigma = tenue.image.clippedmean(biassigma, sigma=5) / math.sqrt(len(datalist))
     print("makebias: estimated noise in bias is %.2f DN." % sigma)
 
-    tenue.image.show(biasdata, zscale=True)
+    tenue.image.show(_biasdata, zscale=True)
 
-    writebias(biasdata, biaspath, name="makebias")
+    writebias(biaspath, name="makebias")
 
     print("makebias: finished.")
 
@@ -256,17 +247,18 @@ def makedark(directorypath, exposuretime, darkpath="dark-{exposuretime}.fits"):
         return
 
     print("makedark: averaging %d darks with rejection." % len(datalist))
-    darkdata, darksigma = tenue.image.clippedmeanandsigma(datalist, sigma=3, axis=0)
+    global _darkdata
+    _darkdata, darksigma = tenue.image.clippedmeanandsigma(datalist, sigma=3, axis=0)
 
-    mean, sigma = tenue.image.clippedmeanandsigma(darkdata, sigma=5)
+    mean, sigma = tenue.image.clippedmeanandsigma(_darkdata, sigma=5)
     print("makedark: dark is %.2f ± %.2f DN." % (mean, sigma))
 
     sigma = tenue.image.clippedmean(darksigma, sigma=5) / math.sqrt(len(datalist))
     print("makedark: estimated noise in dark is %.2f DN." % sigma)
 
-    tenue.image.show(darkdata, zscale=True)
+    tenue.image.show(_darkdata, zscale=True)
 
-    writedark(darkdata, darkpath, exposuretime=exposuretime, name="makedark")
+    writedark(darkpath, exposuretime=exposuretime, name="makedark")
 
     print("makedark: finished.")
 
@@ -315,7 +307,7 @@ def makeflatandmask(
 
     def makemaskhelper(flatdata):
 
-        maskdata = np.ones(flatdata.shape)
+        maskdata = np.ones(flatdata.shape, dtype="float32")
 
         print("makeflatandmask: masking nan values.")
         maskdata[np.isnan(flatdata)] = 0
@@ -327,14 +319,14 @@ def makeflatandmask(
         maskdata[np.where(flatdata < 0.80)] = 0
 
         print("makeflatandmask: masking locally high or low pixels.")
-        low = scipy.ndimage.median_filter(flatdata, 7)
+        low = tenue.image.medianfilter(flatdata, 7)
         high = flatdata / low
         maskdata[np.where(high < 0.97)] = 0
         maskdata[np.where(high > 1.03)] = 0
 
         print("makeflatandmask: masking pixels with at least two masked neighbors.")
         # Grow the mask so that any pixel with at least 2 neigboring bad pixels is also bad.
-        grow = scipy.ndimage.filters.uniform_filter(maskdata, size=3, mode="nearest")
+        grow = tenue.image.uniformfilter(maskdata, size=3)
         maskdata[np.where(grow <= 7 / 9)] = 0
 
         print(
@@ -358,18 +350,21 @@ def makeflatandmask(
     flatdata = makeflathelper()
 
     print("makeflatandmask: making real mask.")
-    maskdata = makemaskhelper(flatdata)
-    tenue.image.show(maskdata, zrange=True)
+    global _maskdata
+    _maskdata = makemaskhelper(flatdata)
 
-    writemask(maskdata, maskpath, filter=filter, name="makeflatandmask")
+    tenue.image.show(_maskdata, zrange=True)
+
+    writemask(maskpath, filter=filter, name="makeflatandmask")
 
     print("makeflatandmask: making flat with real mask.")
-    flatdata = makeflathelper()
+    global _flatdata
+    _flatdata = makeflathelper()
 
-    writeflat(flatdata, flatpath, filter=filter, name="makeflatandmask")
+    tenue.image.show(_flatdata, zrange=True)
 
-    tenue.image.show(flatdata, zrange=True)
-
+    writeflat(flatpath, filter=filter, name="makeflatandmask")
+    
     print("makeflatandmask: finished.")
 
     return
