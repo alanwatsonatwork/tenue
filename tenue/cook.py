@@ -187,13 +187,13 @@ def usefakemask():
     return _maskdata
 
 
-def makebias(directorypath, biaspath="bias.fits"):
+def makebias(fitspaths, biaspath="bias.fits"):
     def readonebias(fitspath):
         return cook(fitspath, name="makebias", dooverscan=True, dotrim=True)
 
-    print("makebias: making bias from %s." % (directorypath))
+    print("makebias: making bias from %s." % (fitspaths))
 
-    fitspathlist = tenue.path.getrawfitspaths(directorypath)
+    fitspathlist = tenue.path.getrawfitspaths(fitspaths)
     if len(fitspathlist) == 0:
         print("ERROR: no bias files found.")
         return
@@ -223,15 +223,16 @@ def makebias(directorypath, biaspath="bias.fits"):
     return
 
 
-def makedark(directorypath, exposuretime, darkpath="dark-{exposuretime}.fits"):
+def makedark(fitspaths, exposuretime, darkpath="dark-{exposuretime}.fits"):
+
     def readonedark(fitspath):
         return cook(
             fitspath, name="makedark", dooverscan=True, dotrim=True, dobias=True
         )
 
-    print("makedark: making %.0f second dark from %s." % (exposuretime, directorypath))
+    print("makedark: making %.0f second dark from %s." % (exposuretime, fitspaths))
 
-    fitspathlist = tenue.path.getrawfitspaths(directorypath, exposuretime=exposuretime)
+    fitspathlist = tenue.path.getrawfitspaths(fitspaths, exposuretime=exposuretime)
     if len(fitspathlist) == 0:
         print("ERROR: no dark files found.")
         return
@@ -262,7 +263,7 @@ def makedark(directorypath, exposuretime, darkpath="dark-{exposuretime}.fits"):
 
 
 def makeflatandmask(
-    directorypath, filter, flatpath="flat-{filter}.fits", maskpath="mask-{filter}.fits"
+    fitspaths, filter, flatpath="flat-{filter}.fits", maskpath="mask-{filter}.fits"
 ):
 
     def readoneflat(fitspath):
@@ -333,9 +334,9 @@ def makeflatandmask(
 
         return maskdata
 
-    print("makeflatandmask: making %s flat and mask from %s." % (filter, directorypath))
+    print("makeflatandmask: making %s flat and mask from %s." % (filter, fitspaths))
 
-    fitspathlist = tenue.path.getrawfitspaths(directorypath, filter=filter)
+    fitspathlist = tenue.path.getrawfitspaths(fitspaths, filter=filter)
     if len(fitspathlist) == 0:
         print("ERROR: no flat files found.")
         return

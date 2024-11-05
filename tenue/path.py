@@ -5,11 +5,8 @@ import tenue.fits
 import tenue.instrument
 
 
-def getrawfitspaths(directorypath, filter=None, exposuretime=None):
-    fitspaths = glob.glob(directorypath + "/*.fits")
-    if len(fitspaths) == 0:
-        fitspaths = glob.glob(directorypath + "/*.fits.fz")
-    fitspaths = sorted(fitspaths)
+def getrawfitspaths(fitspaths, filter=None, exposuretime=None):
+    fitspaths = sorted(glob.glob(fitspaths))
     if filter != None:
         fitspaths = list(
             fitspath
