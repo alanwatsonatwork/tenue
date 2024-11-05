@@ -189,7 +189,7 @@ def makeobject(
         sigma = tenue.image.clippedmean(skysigma, sigma=3) / math.sqrt(
             len(fitspathlist)
         )
-        print("makeobject: estimated noise in sky image is %.2f." % sigma)
+        print("makeobject: estimated noise in sky image is %.2f DN." % sigma)
         skymean[np.where(np.isnan(skymean))] = 0
         tenue.image.show(skymean, zmin=-20, zmax=50)
         writesky(skymean, "sky-%s.fits" % filter, filter=filter, name="makeobject")
@@ -215,7 +215,7 @@ def makeobject(
         sigma = tenue.image.clippedmean(objectsigma, sigma=3) / math.sqrt(
             len(fitspathlist)
         )
-        print("makeobject: estimated noise in object image is %.2f." % sigma)
+        print("makeobject: estimated noise in object image is %.2f DN." % sigma)
 
     tenue.image.show(objectmean, zscale=True, contrast=0.1)
 
