@@ -32,7 +32,7 @@ def writesky(
 
 
 def makeobject(
-    directorypath,
+    fitspaths,
     objectname,
     filter,
     align=None,
@@ -170,9 +170,9 @@ def makeobject(
 
         return data
 
-    print("makeobject: making %s object from %s." % (filter, directorypath))
+    print("makeobject: making %s object from %s." % (filter, fitspaths))
 
-    fitspathlist = tenue.path.getrawfitspaths(directorypath, filter=filter)
+    fitspathlist = tenue.path.getrawfitspaths(fitspaths, filter=filter)
     if len(fitspathlist) == 0:
         print("ERROR: no object files found.")
         return
