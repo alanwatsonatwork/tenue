@@ -364,7 +364,7 @@ def makeflatandmask(
     tenue.image.show(_flatdata, zrange=True)
 
     writeflat(flatpath, filter=filter, name="makeflatandmask")
-    
+
     print("makeflatandmask: finished.")
 
     return

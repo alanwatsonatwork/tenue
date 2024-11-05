@@ -12,14 +12,19 @@ import tenue.path
 _skydata = None
 _objectdata = None
 
-def writeobject(objectname, filter, path="{objectname}-{filter}.fits", name="writeobject"):
+
+def writeobject(
+    objectname, filter, path="{objectname}-{filter}.fits", name="writeobject"
+):
     path = path.format(objectname=objectname, filter=filter)
     print("%s: writing %s." % (name, path))
     tenue.fits.writeproduct(path, _objectdata, filter=filter)
     return
 
 
-def writesky(objectname, filter, path="{objectname}-{filter}-sky.fits", name="writesky"):
+def writesky(
+    objectname, filter, path="{objectname}-{filter}-sky.fits", name="writesky"
+):
     path = path.format(objectname=objectname, filter=filter)
     print("%s: writing %s." % (name, path))
     tenue.fits.writeproduct(path, _skydata, filter=filter)

@@ -17,7 +17,9 @@ def clippedmean(stack, sigma=3.0, axis=None):
         mean, median, sigma = astropy.stats.sigma_clipped_stats(
             np.array(stack), sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
         )
-    return mean.astype("float32")
+    if isinstance(mean, np.ndarray):
+        mean = mean.astype("float32")
+    return mean
 
 
 def clippedsigma(stack, sigma=3.0, axis=None):
@@ -26,7 +28,9 @@ def clippedsigma(stack, sigma=3.0, axis=None):
         mean, median, sigma = astropy.stats.sigma_clipped_stats(
             np.array(stack), sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
         )
-    return sigma.astype("float32")
+    if isinstance(sigma, np.ndarray):
+        sigma = sigma.astype("float32")
+    return sigma
 
 
 def clippedmeanandsigma(stack, sigma=3.0, axis=None):
@@ -35,10 +39,16 @@ def clippedmeanandsigma(stack, sigma=3.0, axis=None):
         mean, median, sigma = astropy.stats.sigma_clipped_stats(
             np.array(stack), sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
         )
-    return mean.astype("float32"), sigma.astype("float32")
+    if isinstance(mean, np.ndarray):
+        mean = mean.astype("float32")
+    if isinstance(sigma, np.ndarray):
+        sigma = sigma.astype("float32")
+    return mean, sigma
+
 
 def medianfilter(data, size):
-     return scipy.ndimage.median_filter(data, size)
+    return scipy.ndimage.median_filter(data, size)
+
 
 def uniformfilter(data, size):
     return scipy.ndimage.filters.uniform_filter(data, size=size, mode="nearest")
