@@ -10,24 +10,25 @@ import tenue.instrument
 import tenue.path
 
 _skydata = None
+_objectdata = None
 
-
-def writeobject(data, path, filter=None, name="writeobject"):
+def writeobject(objectname, filter, path="{objectname}-{filter}.fits", name="writeobject"):
+    path = path.format(objectname=objectname, filter=filter)
     print("%s: writing %s." % (name, path))
-    tenue.fits.writeproduct(path, data, filter=filter)
+    tenue.fits.writeproduct(path, _objectdata, filter=filter)
     return
 
 
-def writesky(data, path, filter=None, name="writesky"):
+def writesky(objectname, filter, path="{objectname}-{filter}-sky.fits", name="writesky"):
+    path = path.format(objectname=objectname, filter=filter)
     print("%s: writing %s." % (name, path))
-    global _skydata
-    _skydata = data
-    tenue.fits.writeproduct(path, data, filter=filter)
+    tenue.fits.writeproduct(path, _skydata, filter=filter)
     return
 
 
 def makeobject(
     directorypath,
+    objectname,
     filter,
     align=None,
     nalignregion=40,
@@ -145,7 +146,7 @@ def makeobject(
                 tenue.image.show(aligndata, contrast=0.05)
 
         datashape = np.array(data.shape)
-        newdata = np.full(datashape + 2 * margin, np.nan, dtype=float)
+        newdata = np.full(datashape + 2 * margin, np.nan, dtype="float32")
         xlo = margin - dx
         xhi = xlo + datashape[1]
         ylo = margin - dy
@@ -182,34 +183,35 @@ def makeobject(
         % (math.degrees(refalpha), math.degrees(refdelta))
     )
 
+    global _skydata
     if doskyimage:
         skystack = list(readonesky(fitspath) for fitspath in fitspathlist)
         print("makeobject: making sky image.")
-        skymean, skysigma = tenue.image.clippedmeanandsigma(skystack, sigma=3, axis=0)
+        _skydata, skysigma = tenue.image.clippedmeanandsigma(skystack, sigma=3, axis=0)
         sigma = tenue.image.clippedmean(skysigma, sigma=3) / math.sqrt(
             len(fitspathlist)
         )
         print("makeobject: estimated noise in sky image is %.2f DN." % sigma)
-        skymean[np.where(np.isnan(skymean))] = 0
-        tenue.image.show(skymean, zmin=-20, zmax=50)
-        writesky(skymean, "sky-%s.fits" % filter, filter=filter, name="makeobject")
+        _skydata[np.where(np.isnan(_skydata))] = 0
+        tenue.image.show(_skydata, zmin=-20, zmax=50)
+        writesky(objectname, filter, name="makeobject")
     else:
-        global _skydata
         _skydata = 0
 
     objectstack = np.array(list(readoneobject(fitspath) for fitspath in fitspathlist))
 
+    global _objectdata
     if sigma is None:
         print(
             "makeobject: averaging %d object files without rejection."
             % len(objectstack)
         )
-        objectdata = np.average(objectstack, axis=0)
+        _objectdata = np.average(objectstack, axis=0)
     else:
         print(
             "makeobject: averaging %d object files with rejection." % len(objectstack)
         )
-        objectmean, objectsigma = tenue.image.clippedmeanandsigma(
+        _objectdata, objectsigma = tenue.image.clippedmeanandsigma(
             objectstack, sigma=10, axis=0
         )
         sigma = tenue.image.clippedmean(objectsigma, sigma=3) / math.sqrt(
@@ -217,9 +219,9 @@ def makeobject(
         )
         print("makeobject: estimated noise in object image is %.2f DN." % sigma)
 
-    tenue.image.show(objectmean, zscale=True, contrast=0.1)
+    tenue.image.show(_objectdata, zscale=True, contrast=0.1)
 
-    writeobject(objectmean, "object-%s.fits" % filter, filter=filter, name="makeobject")
+    writeobject(objectname, filter, name="makeobject")
 
     print("makeobject: finished.")
 
