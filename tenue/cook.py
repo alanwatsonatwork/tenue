@@ -272,6 +272,7 @@ def makeflatandmask(
             dooverscan=True,
             dotrim=True,
             dobias=True,
+            dodark=True,
             domask=True,
         )
         if np.isnan(data).all():
