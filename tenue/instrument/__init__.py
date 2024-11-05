@@ -5,6 +5,7 @@ def setvalues(
     trimyslice=None,
     trimxslice=None,
     filterkeyword=None,
+    exposuretimekeyword=None,
     alphakeyword=None,
     deltakeyword=None,
     rotationkeyword=None,
@@ -31,6 +32,9 @@ def setvalues(
 
     global _filterkeyword
     _filterkeyword = filterkeyword
+
+    global _exposuretimekeyword
+    _exposuretimekeyword = exposuretimekeyword
 
     global _alphakeyword
     _alphakeyword = alphakeyword
@@ -76,6 +80,10 @@ def trimxslice():
 
 def filterkeyword():
     return _filterkeyword
+
+
+def exposuretimekeyword():
+    return _exposuretimekeyword
 
 
 def alphakeyword():

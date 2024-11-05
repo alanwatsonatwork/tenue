@@ -27,8 +27,9 @@ def readbias(path="bias.fits", name="readbias"):
     return _biasdata
 
 
-def readdark(path="dark.fits", name="readdark"):
+def readdark(exposuretime, path="dark-{exposuretime:.0f}.fits", name="readdark"):
     global _darkdata
+    path = path.format(exposuretime=exposuretime)
     if os.path.exists(path):
         print("%s: reading %s." % (name, path))
         _darkdata = tenue.fits.readproductdata(path)
@@ -38,7 +39,7 @@ def readdark(path="dark.fits", name="readdark"):
     return _darkdata
 
 
-def readflat(filter=None, path="flat-{filter}.fits", name="readflat"):
+def readflat(filter, path="flat-{filter}.fits", name="readflat"):
     global _flatdata
     path = path.format(filter=filter)
     if os.path.exists(path):
@@ -50,7 +51,7 @@ def readflat(filter=None, path="flat-{filter}.fits", name="readflat"):
     return _flatdata
 
 
-def readmask(filter=None, path="mask-{filter}.fits", name="readmask"):
+def readmask(filter, path="mask-{filter}.fits", name="readmask"):
     global _maskdata
     path = path.format(filter=filter)
     if os.path.exists(path):
@@ -70,7 +71,8 @@ def writebias(data, path="bias.fits", name="writebias"):
     return
 
 
-def writedark(data, path="dark.fits", name="writebias"):
+def writedark(data, path="dark-{exposuretime:.0f}.fits", exposuretime=None, name="writebias"):
+    path = path.format(exposuretime=exposuretime)
     print("%s: writing %s." % (name, path))
     global _darkdata
     _darkdata = data
@@ -234,15 +236,15 @@ def makebias(directorypath, biaspath="bias.fits"):
     return
 
 
-def makedark(directorypath, darkpath="dark.fits"):
+def makedark(directorypath, exposuretime, darkpath="dark-{exposuretime}.fits"):
     def readonedark(fitspath):
         return cook(
             fitspath, name="makedark", dooverscan=True, dotrim=True, dobias=True
         )
 
-    print("makedark: making dark from %s." % (directorypath))
+    print("makedark: making %.0f second dark from %s." % (exposuretime, directorypath))
 
-    fitspathlist = tenue.path.getrawfitspaths(directorypath)
+    fitspathlist = tenue.path.getrawfitspaths(directorypath, exposuretime=exposuretime)
     if len(fitspathlist) == 0:
         print("ERROR: no dark files found.")
         return
@@ -264,14 +266,16 @@ def makedark(directorypath, darkpath="dark.fits"):
 
     tenue.image.show(darkdata, zscale=True)
 
-    writedark(darkdata, darkpath, name="makedark")
+    writedark(darkdata, darkpath, exposuretime=exposuretime, name="makedark")
 
     print("makedark: finished.")
 
     return
 
 
-def makeflatandmask(directorypath, filter, flatpath="flat-{filter}.fits", maskpath="mask-{filter}.fits"):
+def makeflatandmask(
+    directorypath, filter, flatpath="flat-{filter}.fits", maskpath="mask-{filter}.fits"
+):
 
     def readoneflat(fitspath):
         data = cook(

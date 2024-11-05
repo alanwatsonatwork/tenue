@@ -7,6 +7,7 @@ tenue.instrument.setvalues(
     trimyslice=slice(11, 2058),
     trimxslice=slice(18, 2065),
     filterkeyword="FILTER",
+    exposuretimekeyword="EXPTIME",
     alphakeyword="SMTMRA",
     deltakeyword="SMTMDE",
     rotationkeyword="SMTMRO",
