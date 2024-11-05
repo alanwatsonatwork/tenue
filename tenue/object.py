@@ -75,7 +75,6 @@ def makeobject(
         if skyclip is not None:
             data[np.where(data >= +skyclip)] = np.nan
             data[np.where(data <= -skyclip)] = np.nan
-        tenue.image.show(data, zscale=True)
         return data
 
     def readoneobject(fitspath):
