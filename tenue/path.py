@@ -21,7 +21,9 @@ def getrawfitspaths(directorypath, filter=None, exposuretime=None):
         fitspaths = list(
             fitspath
             for fitspath in fitspaths
-            if tenue.fits.readrawheader(fitspath)[tenue.instrument.exposuretimekeyword()]
+            if tenue.fits.readrawheader(fitspath)[
+                tenue.instrument.exposuretimekeyword()
+            ]
             == exposuretime
         )
     return fitspaths
