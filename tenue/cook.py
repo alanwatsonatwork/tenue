@@ -20,8 +20,7 @@ def readbias(path="bias.fits", name="readbias"):
         print("%s: reading %s." % (name, path))
         _biasdata = tenue.fits.readproductdata(path)
     else:
-        print("%s: WARNING: no bias found; using a fake bias." % (name))
-        makefakebias()
+        raise RuntimeError("no bias found.")
     return _biasdata
 
 
@@ -32,8 +31,7 @@ def readdark(exposuretime, path="dark-{exposuretime:.0f}.fits", name="readdark")
         print("%s: reading %s." % (name, path))
         _darkdata = tenue.fits.readproductdata(path)
     else:
-        print("%s: WARNING: no dark found; using a fake dark." % (name))
-        makefakedark()
+        raise RuntimeError("no dark found.")
     return _darkdata
 
 
@@ -44,8 +42,7 @@ def readflat(filter, path="flat-{filter}.fits", name="readflat"):
         print("%s: reading %s." % (name, path))
         _flatdata = tenue.fits.readproductdata(path)
     else:
-        print("%s: WARNING: no flat found; using a fake flat." % (name))
-        makefakeflat()
+        raise RuntimeError("no flat found.")
     return _flatdata
 
 
@@ -56,8 +53,7 @@ def readmask(filter, path="mask-{filter}.fits", name="readmask"):
         print("%s: reading %s." % (name, path))
         _maskdata = tenue.fits.readproductdata(path)
     else:
-        print("%s: WARNING: no mask found; using a fake mask." % (name))
-        makefakemask()
+        raise RuntimeError("no mask found.")
     return _maskdata
 
 
@@ -167,25 +163,25 @@ def cook(
     return data
 
 
-def makefakebias():
+def usefakebias():
     global _biasdata
     _biasdata = np.zeros((2051, 1024))
     return _biasdata
 
 
-def makefakedark():
+def usefakedark():
     global _darkdata
     _darkdata = np.zeros((2051, 1024))
     return _darkdata
 
 
-def makefakeflat():
+def usefakeflat():
     global _flatdata
     _flatdata = np.ones((2051, 1024))
     return _flatdata
 
 
-def makefakemask():
+def usefakemask():
     global _maskdata
     _maskdata = np.ones((2051, 1024))
     return _maskdata
@@ -344,7 +340,7 @@ def makeflatandmask(
         return
 
     print("makeflatandmask: making fake mask.")
-    makefakemask()
+    usefakemask()
 
     print("makeflatandmask: making flat with fake mask.")
     flatdata = makeflathelper()
