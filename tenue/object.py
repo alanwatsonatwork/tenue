@@ -205,7 +205,6 @@ def makeobject(
     else:
         _skydata = 0
 
-
     objectstack = np.array(list(readoneobject(fitspath) for fitspath in fitspathlist))
 
     global _objectdata
@@ -232,15 +231,23 @@ def makeobject(
     writeobject(objectname, filter, name="makeobject")
 
     # Determine time properties of the stack.
-        
+
     headerlist = list(tenue.fits.readrawheader(fitspath) for fitspath in fitspathlist)
 
-    starttimestamp = min((tenue.instrument.starttimestamp(header) for header in headerlist))
-    print("makeobject: start time is %s UTC." % datetime.utcfromtimestamp(starttimestamp).isoformat(" ", "seconds"))
+    starttimestamp = min(
+        (tenue.instrument.starttimestamp(header) for header in headerlist)
+    )
+    print(
+        "makeobject: start time is %s UTC."
+        % datetime.utcfromtimestamp(starttimestamp).isoformat(" ", "seconds")
+    )
 
     endtimestamp = max((tenue.instrument.endtimestamp(header) for header in headerlist))
-    print("makeobject: end   time is %s UTC." % datetime.utcfromtimestamp(endtimestamp).isoformat(" ", "seconds"))
-    
+    print(
+        "makeobject: end   time is %s UTC."
+        % datetime.utcfromtimestamp(endtimestamp).isoformat(" ", "seconds")
+    )
+
     print("makeobject: finished.")
 
     return
