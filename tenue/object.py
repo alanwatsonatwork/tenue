@@ -219,7 +219,7 @@ def makeobject(
     meritlist = []
     objectlist = list(readoneobject(fitspath) for fitspath in fitspathlist)
     headerlist = list(tenue.fits.readrawheader(fitspath) for fitspath in fitspathlist)
-    
+
     if len(meritlist) > 0:
 
         plt.figure()
@@ -231,7 +231,7 @@ def makeobject(
         plt.axhline(rejectfraction)
         plt.xlabel("Merit")
         plt.ylabel("Cumulative Fraction")
-        plt.show()    
+        plt.show()
 
         noriginal = len(objectlist)
         meritlimit = np.percentile(meritlist, 100 * rejectfraction)
@@ -251,7 +251,10 @@ def makeobject(
         )
         nfinal = len(objectlist)
         print("makeobject: accepted %d images out of %d." % (nfinal, noriginal))
-        print("makeobject: rejected %d images out of %d." % ((noriginal - nfinal), noriginal))
+        print(
+            "makeobject: rejected %d images out of %d."
+            % ((noriginal - nfinal), noriginal)
+        )
 
     global _objectdata
     if sigma is None:
