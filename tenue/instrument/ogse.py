@@ -1,5 +1,16 @@
 import tenue.instrument
 
+from datetime import datetime
+
+def exposuretime(header):
+    return header["EXPTIME"]
+
+def starttimestamp(header):
+    return datetime.fromisoformat(header["DATE-OBS"] + "Z").timestamp()
+
+def endtimestamp(header):
+    return starttimestamp(header) + exposuretime(header)
+
 tenue.instrument.setvalues(
     datamax=65535,
     overscanyslice=slice(1, 10),
@@ -8,6 +19,8 @@ tenue.instrument.setvalues(
     trimxslice=slice(18, 2065),
     filterkeyword="FILTER",
     exposuretimekeyword="EXPTIME",
+    starttimestamp=starttimestamp,
+    endtimestamp=endtimestamp,
     alphakeyword="SMTMRA",
     deltakeyword="SMTMDE",
     rotationkeyword="SMTMRO",
