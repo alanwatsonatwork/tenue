@@ -47,6 +47,7 @@ def makeobject(
     doskyimage=False,
     skyclip=None,
     triggertime=None,
+    rejectfraction=0.25,
 ):
     def readonepointing(fitspath):
         header = tenue.fits.readrawheader(fitspath)
@@ -126,7 +127,8 @@ def makeobject(
         print("makeobject: raw offset is dx = %+d px dy = %+d px." % (dx, dy))
 
         margin = 512
-        if align != None:
+        if align is not None:
+
             aligny = align[0] - margin
             alignx = align[1] - margin
             if nwindow is not None:
@@ -150,6 +152,14 @@ def makeobject(
             dx += ddx
             dy += ddy
             print("makeobject: refined offset is dx = %+d px dy = %+d px." % (dx, dy))
+
+            merit = float(
+                np.max(tenue.image.medianfilter(aligndata, 3))
+                / tenue.image.clippedsigma(aligndata, sigma=3)
+            )
+            print("makeobject: merit is %.1f." % merit)
+            meritlist.append(merit)
+
             if showalignment:
                 tenue.image.show(aligndata, contrast=0.05)
 
@@ -206,21 +216,41 @@ def makeobject(
     else:
         _skydata = 0
 
-    objectstack = np.array(list(readoneobject(fitspath) for fitspath in fitspathlist))
+    meritlist = []
+    objectlist = list(readoneobject(fitspath) for fitspath in fitspathlist)
+    headerlist = list(tenue.fits.readrawheader(fitspath) for fitspath in fitspathlist)
+
+    if len(meritlist) > 0:
+        noriginal = len(objectlist)
+        meritlimit = np.percentile(meritlist, 100 * rejectfraction)
+        print(
+            "makeobject: rejecting fraction %.2f of images with merit less than %.1f."
+            % (rejectfraction, meritlimit)
+        )
+        objectlist = list(
+            object
+            for object, merit in zip(objectlist, meritlist)
+            if merit >= meritlimit
+        )
+        headerlist = list(
+            header
+            for header, merit in zip(headerlist, meritlist)
+            if merit >= meritlimit
+        )
+        nfinal = len(objectlist)
+        print("makeobject: accepted %d images out of %d." % (nfinal, noriginal))
+        print("makeobject: rejected %d images out of %d." % ((noriginal - nfinal), noriginal))
 
     global _objectdata
     if sigma is None:
         print(
-            "makeobject: averaging %d object files without rejection."
-            % len(objectstack)
+            "makeobject: averaging %d object files without rejection." % len(objectlist)
         )
-        _objectdata = np.average(objectstack, axis=0)
+        _objectdata = np.average(objectlist, axis=0)
     else:
-        print(
-            "makeobject: averaging %d object files with rejection." % len(objectstack)
-        )
+        print("makeobject: averaging %d object files with rejection." % len(objectlist))
         _objectdata, objectsigma = tenue.image.clippedmeanandsigma(
-            objectstack, sigma=10, axis=0
+            objectlist, sigma=10, axis=0
         )
         sigma = tenue.image.clippedmean(objectsigma, sigma=3) / math.sqrt(
             len(fitspathlist)
@@ -233,8 +263,6 @@ def makeobject(
 
     # Determine time properties of the stack.
 
-    headerlist = list(tenue.fits.readrawheader(fitspath) for fitspath in fitspathlist)
-    
     starttimestamp = min(
         (tenue.instrument.starttimestamp(header) for header in headerlist)
     )
@@ -248,13 +276,34 @@ def makeobject(
         "makeobject: observation end   time is %s UTC."
         % datetime.utcfromtimestamp(endtimestamp).isoformat(" ", "seconds")
     )
-    
+
     if triggertime is not None:
         triggertimestamp = datetime.fromisoformat(triggertime + "Z").timestamp()
-        print("makeobject: observations are from %.0f to %.0f seconds after the trigger" % ((starttimestamp - triggertimestamp), (endtimestamp - triggertimestamp)))
-        print("makeobject: observations are from %.2f to %.2f minutes after the trigger" % ((starttimestamp - triggertimestamp) / 60, (endtimestamp - triggertimestamp) / 60))
-        print("makeobject: observations are from %.2f to %.2f hours after the trigger" % ((starttimestamp - triggertimestamp) / 3600, (endtimestamp - triggertimestamp) / 3600))
-        print("makeobject: observations are from %.2f to %.2f days after the trigger" % ((starttimestamp - triggertimestamp) / 86400, (endtimestamp - triggertimestamp) / 86400))
+        print(
+            "makeobject: observations are from %.0f to %.0f seconds after the trigger"
+            % ((starttimestamp - triggertimestamp), (endtimestamp - triggertimestamp))
+        )
+        print(
+            "makeobject: observations are from %.2f to %.2f minutes after the trigger"
+            % (
+                (starttimestamp - triggertimestamp) / 60,
+                (endtimestamp - triggertimestamp) / 60,
+            )
+        )
+        print(
+            "makeobject: observations are from %.2f to %.2f hours after the trigger"
+            % (
+                (starttimestamp - triggertimestamp) / 3600,
+                (endtimestamp - triggertimestamp) / 3600,
+            )
+        )
+        print(
+            "makeobject: observations are from %.2f to %.2f days after the trigger"
+            % (
+                (starttimestamp - triggertimestamp) / 86400,
+                (endtimestamp - triggertimestamp) / 86400,
+            )
+        )
 
     print("makeobject: finished.")
 
