@@ -161,7 +161,7 @@ def makeobject(
             meritlist.append(merit)
 
             if showalignment:
-                tenue.image.show(aligndata, contrast=0.05)
+                tenue.image.show(aligndata, contrast=0.05, small=True)
 
         datashape = np.array(data.shape)
         newdata = np.full(datashape + 2 * margin, np.nan, dtype="float32")

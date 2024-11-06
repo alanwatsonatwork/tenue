@@ -54,7 +54,7 @@ def uniformfilter(data, size):
     return scipy.ndimage.filters.uniform_filter(data, size=size, mode="nearest")
 
 
-def show(data, zrange=False, zscale=False, contrast=0.25, zmin=None, zmax=None):
+def show(data, zrange=False, zscale=False, contrast=0.25, zmin=None, zmax=None, small=False):
 
     if zmin is not None and zmax is not None:
         interval = astropy.visualization.ManualInterval(zmin, zmax)
@@ -70,7 +70,10 @@ def show(data, zrange=False, zscale=False, contrast=0.25, zmin=None, zmax=None):
     tickinterval = int(math.pow(2, int(math.log2(np.max(data.shape) / 8))))
     ticks = list(range(0, np.max(data.shape), tickinterval))
 
-    plt.figure(figsize=(10, 10))
+    if small:
+        plt.figure(figsize=(5, 5))
+    else:
+        plt.figure(figsize=(10, 10))
     plt.imshow(data, origin="lower", norm=norm)
     plt.xticks(ticks)
     plt.yticks(ticks)
