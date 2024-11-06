@@ -46,6 +46,7 @@ def makeobject(
     showalignment=True,
     doskyimage=False,
     skyclip=None,
+    triggertime=None,
 ):
     def readonepointing(fitspath):
         header = tenue.fits.readrawheader(fitspath)
@@ -233,20 +234,27 @@ def makeobject(
     # Determine time properties of the stack.
 
     headerlist = list(tenue.fits.readrawheader(fitspath) for fitspath in fitspathlist)
-
+    
     starttimestamp = min(
         (tenue.instrument.starttimestamp(header) for header in headerlist)
     )
     print(
-        "makeobject: start time is %s UTC."
+        "makeobject: observation start time is %s UTC."
         % datetime.utcfromtimestamp(starttimestamp).isoformat(" ", "seconds")
     )
 
     endtimestamp = max((tenue.instrument.endtimestamp(header) for header in headerlist))
     print(
-        "makeobject: end   time is %s UTC."
+        "makeobject: observation end   time is %s UTC."
         % datetime.utcfromtimestamp(endtimestamp).isoformat(" ", "seconds")
     )
+    
+    if triggertime is not None:
+        triggertimestamp = datetime.fromisoformat(triggertime + "Z").timestamp()
+        print("makeobject: observations are from %.0f to %.0f seconds after the trigger" % ((starttimestamp - triggertimestamp), (endtimestamp - triggertimestamp)))
+        print("makeobject: observations are from %.2f to %.2f minutes after the trigger" % ((starttimestamp - triggertimestamp) / 60, (endtimestamp - triggertimestamp) / 60))
+        print("makeobject: observations are from %.2f to %.2f hours after the trigger" % ((starttimestamp - triggertimestamp) / 3600, (endtimestamp - triggertimestamp) / 3600))
+        print("makeobject: observations are from %.2f to %.2f days after the trigger" % ((starttimestamp - triggertimestamp) / 86400, (endtimestamp - triggertimestamp) / 86400))
 
     print("makeobject: finished.")
 
