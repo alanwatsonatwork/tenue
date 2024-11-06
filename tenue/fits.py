@@ -1,9 +1,6 @@
 import numpy as np
 import astropy.io.fits
 
-ihdu = 0
-
-
 def _ihdu(fitspath):
     """
     Return the HDU index for the actual data in a FITS file. This is 0
@@ -18,22 +15,49 @@ def _ihdu(fitspath):
         return 0
 
 
+def readraw(fitspath, name=None):
+    if name is not None:
+        print(
+            "%s: reading header and data from FITS file %s."
+            % (name, os.path.basename(fitspath))
+        )
+    hdu = astropy.io.fits.open(fitspath)
+    ihdu = _ihdu(fitspath)
+    header = hdu[ihdu].header
+    data = np.array(hdu[ihdu].data, dtype=np.float32)
+    hdu.close()
+    return header, data
+
+
 def readrawheader(fitspath, name=None):
     if name is not None:
         print(
-            "%s: reading header from raw file %s." % (name, os.path.basename(fitspath))
+            "%s: reading header from raw FITS file %s."
+            % (name, os.path.basename(fitspath))
         )
-    hdu = astropy.io.fits.open(fitspath)
-    return hdu[_ihdu(fitspath)].header
+    header, data = readraw(fitspath, None)
+    return header
 
 
 def readrawdata(fitspath, name=None):
     if name is not None:
         print("%s: reading data from raw file %s." % (name, os.path.basename(fitspath)))
-    hdu = astropy.io.fits.open(fitspath)
-    data = np.array(hdu[_ihdu(fitspath)].data, dtype=np.float32)
-    hdu.close()
+    header, data = readraw(fitspath, None)
     return data
+
+
+def readproduct(fitspath, name=None):
+    if name is not None:
+        print(
+            "%s: reading header from product file %s."
+            % (name, os.path.basename(fitspath))
+        )
+    hdu = astropy.io.fits.open(fitspath)
+    ihdu = _ihdu(fitspath)
+    header = hdu[ihdu].header
+    data = np.array(hdu[ihdu].data, dtype=np.float32)
+    hdu.close()
+    return header, data
 
 
 def readproductheader(fitspath, name=None):
@@ -42,9 +66,7 @@ def readproductheader(fitspath, name=None):
             "%s: reading header from product file %s."
             % (name, os.path.basename(fitspath))
         )
-    hdu = astropy.io.fits.open(fitspath)
-    header = hdu[_ihdu(fitspath)].header
-    hdu.close()
+    header, data = readproduct(fitspath, None)
     return header
 
 
@@ -54,8 +76,8 @@ def readproductdata(fitspath, name=None):
             "%s: reading data from product file %s."
             % (name, os.path.basename(fitspath))
         )
-    hdu = astropy.io.fits.open(fitspath)
-    return np.array(hdu[_ihdu(fitspath)].data, dtype=np.float32)
+    header, data = readproduct(fitspath, None)
+    return data
 
 
 def writeproduct(fitspath, data, name=None, filter=None):
