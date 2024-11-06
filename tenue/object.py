@@ -219,8 +219,19 @@ def makeobject(
     meritlist = []
     objectlist = list(readoneobject(fitspath) for fitspath in fitspathlist)
     headerlist = list(tenue.fits.readrawheader(fitspath) for fitspath in fitspathlist)
-
+    
     if len(meritlist) > 0:
+
+        plt.figure()
+        n, bins = np.histogram(meritlist, bins=50)
+        f = np.cumsum(n) / np.sum(n)
+        plt.plot(bins[:-1], f)
+        plt.ylim(0, 1)
+        plt.axhline(rejectfraction)
+        plt.xlabel("Merit")
+        plt.ylabel("Cumulative Fraction")
+        plt.show()    
+
         noriginal = len(objectlist)
         meritlimit = np.percentile(meritlist, 100 * rejectfraction)
         print(
