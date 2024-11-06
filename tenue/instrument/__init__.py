@@ -1,3 +1,18 @@
+from datetime import datetime
+
+
+def defaultexposuretime(header):
+    return header["EXPTIME"]
+
+
+def defaultstarttimestamp(header):
+    return datetime.fromisoformat(header["DATE-OBS"] + "Z").timestamp()
+
+
+def defaultendtimestamp(header):
+    return starttimestamp(header) + exposuretime(header)
+
+
 def setvalues(
     datamax=None,
     overscanyslice=None,
@@ -6,8 +21,9 @@ def setvalues(
     trimxslice=None,
     filterkeyword=None,
     exposuretimekeyword=None,
-    starttimestamp=None,
-    endtimestamp=None,
+    exposuretime=defaultexposuretime,
+    starttimestamp=defaultstarttimestamp,
+    endtimestamp=defaultendtimestamp,
     alphakeyword=None,
     deltakeyword=None,
     rotationkeyword=None,
@@ -37,6 +53,9 @@ def setvalues(
 
     global _exposuretimekeyword
     _exposuretimekeyword = exposuretimekeyword
+
+    global _exposuretime
+    _exposuretime = exposuretime
 
     global _starttimestamp
     _starttimestamp = starttimestamp
@@ -92,6 +111,10 @@ def filterkeyword():
 
 def exposuretimekeyword():
     return _exposuretimekeyword
+
+
+def exposuretime(header):
+    return _exposuretime(header)
 
 
 def starttimestamp(header):
