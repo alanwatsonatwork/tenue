@@ -227,6 +227,7 @@ def makeobject(
         f = np.cumsum(n) / np.sum(n)
         plt.plot(bins[:-1], f)
         plt.ylim(0, 1)
+        plt.xlim(left=0)
         plt.axhline(rejectfraction)
         plt.xlabel("Merit")
         plt.ylabel("Cumulative Fraction")
