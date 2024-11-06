@@ -20,7 +20,6 @@ def setvalues(
     trimyslice=None,
     trimxslice=None,
     filterkeyword=None,
-    exposuretimekeyword=None,
     exposuretime=defaultexposuretime,
     starttimestamp=defaultstarttimestamp,
     endtimestamp=defaultendtimestamp,
@@ -50,9 +49,6 @@ def setvalues(
 
     global _filterkeyword
     _filterkeyword = filterkeyword
-
-    global _exposuretimekeyword
-    _exposuretimekeyword = exposuretimekeyword
 
     global _exposuretime
     _exposuretime = exposuretime
@@ -107,10 +103,6 @@ def trimxslice():
 
 def filterkeyword():
     return _filterkeyword
-
-
-def exposuretimekeyword():
-    return _exposuretimekeyword
 
 
 def exposuretime(header):
