@@ -57,6 +57,7 @@ def makeobject(
     fitspaths,
     objectname,
     filter,
+    fitspathsslice=None,
     align=None,
     nalignregion=40,
     refalpha=None,
@@ -74,29 +75,22 @@ def makeobject(
 
     print("makeobject: making %s object from %s." % (filter, fitspaths))
 
-    fitspathlist = tenue.path.getrawfitspaths(fitspaths, filter=filter)
+    fitspathlist = tenue.path.getrawfitspaths(fitspaths, filter=filter, fitspathsslice=fitspathsslice)
+
+    if len(fitspathlist) == 0:
+        print("ERROR: no dark files found.")
+        return
+
+    if len(fitspathlist) == 0:
+        print("ERROR: no object files found.")
+        return
 
     headerlist = []
     datalist = []
     for fitspath in fitspathlist:
-        header, data = tenue.cook.cook(
-            fitspath,
-            name="makeobject",
-            dooverscan=True,
-            dotrim=True,
-            dobias=True,
-            dodark=True,
-            dorotate=True,
-        )
-        if tenue.instrument.filter(header) != filter:
-            print("makeobject: rejected %s: wrong filter." % os.path.basename(fitspath))
-            continue
+        header, data = tenue.cook.cook(fitspath, name="makeobject", dooverscan=True, dotrim=True, dobias=True, dodark=True, dorotate=True)
         headerlist.append(header)
         datalist.append(data)
-
-    if len(datalist) == 0:
-        print("ERROR: no object files found.")
-        return
 
     ############################################################################
 
