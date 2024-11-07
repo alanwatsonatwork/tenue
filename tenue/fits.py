@@ -1,5 +1,6 @@
 import numpy as np
 import astropy.io.fits
+from datetime import datetime
 
 
 def _ihdu(fitspath):
@@ -93,11 +94,13 @@ def readproductdata(fitspath, name=None):
     return data
 
 
-def writeproduct(fitspath, data, name=None, filter=None):
+def writeproduct(fitspath, data, name=None, filter=None, starttimestamp=None):
     if name is not None:
         print("%s: writing product file %s." % (name, os.path.basename(fitspath)))
     header = astropy.io.fits.Header()
     if filter is not None:
         header.append(("FILTER", filter))
+    if starttimestamp is not None:
+        header.append(("DATE-OBS", datetime.utcfromtimestamp(starttimestamp).isoformat("T", "milliseconds")))
     astropy.io.fits.writeto(fitspath, data, header, overwrite=True)
     return
