@@ -99,8 +99,7 @@ def cook(
 ):
 
     print("%s: reading file %s." % (name, os.path.basename(fitspath)))
-    header = tenue.fits.readrawheader(fitspath)
-    data = tenue.fits.readrawdata(fitspath)
+    header, data = tenue.fits.readraw(fitspath)
 
     # Set invalid pixels to nan.
     data[np.where(data == tenue.instrument.datamax(header))] = np.nan
@@ -156,7 +155,7 @@ def cook(
         sy = int(cy - n / 2)
         data = data[sy : sy + n, sx : sx + n]
 
-    return data
+    return header, data
 
 
 def usefakebias():
@@ -185,7 +184,8 @@ def usefakemask():
 
 def makebias(fitspaths, biaspath="bias.fits"):
     def readonebias(fitspath):
-        return cook(fitspath, name="makebias", dooverscan=True, dotrim=True)
+        header, data = cook(fitspath, name="makebias", dooverscan=True, dotrim=True)
+        return data
 
     print("makebias: making bias from %s." % (fitspaths))
 
@@ -222,9 +222,10 @@ def makebias(fitspaths, biaspath="bias.fits"):
 def makedark(fitspaths, exposuretime, darkpath="dark-{exposuretime}.fits"):
 
     def readonedark(fitspath):
-        return cook(
+        header, data = cook(
             fitspath, name="makedark", dooverscan=True, dotrim=True, dobias=True
         )
+        return data
 
     print("makedark: making %.0f second dark from %s." % (exposuretime, fitspaths))
 
@@ -263,8 +264,7 @@ def makeflatandmask(
 ):
 
     def readoneflat(fitspath):
-        header = tenue.fits.readrawheader(fitspath)
-        data = cook(
+        header, data = cook(
             fitspath,
             name="makeflatandmask",
             dooverscan=True,
