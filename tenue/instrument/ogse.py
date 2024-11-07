@@ -8,15 +8,15 @@ def overscanyslice(header):
 
 
 def overscanxslice(header):
-    return slice(18, 2065)
+    return slice(18, 2066)
 
 
 def trimyslice(header):
-    return slice(11, 2058)
+    return slice(11, 2059)
 
 
 def trimxslice(header):
-    return slice(18, 2065)
+    return slice(18, 2066)
 
 
 def dorotate(header, data):
