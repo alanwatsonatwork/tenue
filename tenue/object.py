@@ -33,6 +33,26 @@ def writesky(
     return
 
 
+def _makesky(datalist, filter=filter, skyclip=None, objectname=None):
+
+    newdatalist = []
+    for data in datalist:
+        newdata = np.copy(data)
+        newdata -= np.nanmedian(newdata)
+        if skyclip is not None:
+            newdata[np.where(newdata >= +skyclip)] = np.nan
+            newdata[np.where(newdata <= -skyclip)] = np.nan
+        newdatalist.append(newdata)
+
+    print("makeobject: making sky image.")
+    global _skydata
+    _skydata, skysigma = tenue.image.clippedmeanandsigma(newdatalist, sigma=3, axis=0)
+    sigma = tenue.image.clippedmean(skysigma, sigma=3) / math.sqrt(len(datalist))
+    print("makeobject: estimated noise in sky image is %.2f DN." % sigma)
+    tenue.image.show(_skydata, zmin=-20, zmax=50)
+    writesky(objectname, filter, name="makeobject")
+
+
 def makeobject(
     fitspaths,
     objectname,
@@ -43,32 +63,22 @@ def makeobject(
     refdelta=None,
     sigma=None,
     nwindow=None,
-    showalignment=True,
+    showwindow=True,
     doskyimage=False,
     skyclip=None,
     triggertime=None,
     rejectfraction=0.25,
 ):
-    def readonepointing(fitspath):
-        header = tenue.fits.readrawheader(fitspath)
-        print(
-            "makeobject: reading pointing for %s object file %s."
-            % (filter, os.path.basename(fitspath))
-        )
-        alpha = math.radians(tenue.instrument.alpha(header))
-        delta = math.radians(tenue.instrument.delta(header))
-        print(
-            "makeobject: pointing is alpha = %.5f deg delta = %.5f deg."
-            % (math.degrees(alpha), math.degrees(delta))
-        )
-        return [alpha, delta]
 
-    def readonesky(fitspath):
+    ############################################################################
 
-        print(
-            "makeobject: reading %s sky file %s." % (filter, os.path.basename(fitspath))
-        )
+    print("makeobject: making %s object from %s." % (filter, fitspaths))
 
+    fitspathlist = tenue.path.getrawfitspaths(fitspaths, filter=filter)
+
+    headerlist = []
+    datalist = []
+    for fitspath in fitspathlist:
         header, data = tenue.cook.cook(
             fitspath,
             name="makeobject",
@@ -76,56 +86,82 @@ def makeobject(
             dotrim=True,
             dobias=True,
             dodark=True,
-            doflat=True,
-            dowindow=False,
-            dosky=True,
             dorotate=True,
         )
-        if skyclip is not None:
-            data[np.where(data >= +skyclip)] = np.nan
-            data[np.where(data <= -skyclip)] = np.nan
-        return data
+        if tenue.instrument.filter(header) != filter:
+            print("makeobject: rejected %s: wrong filter." % os.path.basename(fitspath))
+            continue
+        headerlist.append(header)
+        datalist.append(data)
 
-    def readoneobject(fitspath):
+    if len(datalist) == 0:
+        print("ERROR: no object files found.")
+        return
 
-        print(
-            "makeobject: reading %s object file %s."
-            % (filter, os.path.basename(fitspath))
-        )
+    ############################################################################
 
-        header, data = tenue.cook.cook(
-            fitspath,
-            name="makeobject",
-            dooverscan=True,
-            dotrim=True,
-            dobias=True,
-            dodark=True,
-            doflat=True,
-            dowindow=False,
-            dosky=True,
-            dorotate=True,
-        )
-        data -= _skydata
+    if refalpha == None or refdelta == None:
+        print("makeobject: determining reference pointing.")
+        alphalist = []
+        deltalist = []
+        for header in headerlist:
+            alpha = math.radians(tenue.instrument.alpha(header))
+            delta = math.radians(tenue.instrument.delta(header))
+            print(
+                "makeobject: pointing for %s is alpha = %.5f deg delta = %.5f deg."
+                % (os.path.basename(fitspath), math.degrees(alpha), math.degrees(delta))
+            )
+            alphalist.append(alpha)
+            deltalist.append(delta)
+            refalpha = (np.min(alphalist) + np.max(alphalist)) / 2
+            refdelta = (np.min(deltalist) + np.max(deltalist)) / 2
+    print(
+        "makeobject: reference pointing is alpha = %.5f deg delta = %.5f deg."
+        % (math.degrees(refalpha), math.degrees(refdelta))
+    )
 
-        header = tenue.fits.readrawheader(fitspath)
+    ############################################################################
 
+    if doskyimage:
+        _makesky(datalist, filter, skyclip=skyclip, objectname=objectname)
+
+    for data in datalist:
+        data -= np.nanmedian(data)
+        if doskyimage:
+            data -= _skydata
+
+    ############################################################################
+
+    dxlist = []
+    dylist = []
+
+    for header in headerlist:
+    
         alpha = math.radians(tenue.instrument.alpha(header))
         delta = math.radians(tenue.instrument.delta(header))
         pixelscale = math.radians(tenue.instrument.pixelscale(header))
         rotation = math.radians(tenue.instrument.rotation(header))
 
-        print(
-            "makeobject: pointing is alpha = %.5f deg delta = %.5f deg."
-            % (math.degrees(alpha), math.degrees(delta))
-        )
         dalpha = (alpha - refalpha) / pixelscale * math.cos(refdelta)
         ddelta = (delta - refdelta) / pixelscale
-        dx = int(np.round(dalpha * math.cos(rotation) - ddelta * math.sin(rotation)))
+        dx = +int(np.round(dalpha * math.cos(rotation) - ddelta * math.sin(rotation)))
         dy = -int(np.round(dalpha * math.sin(rotation) + ddelta * math.cos(rotation)))
-        print("makeobject: raw offset is dx = %+d px dy = %+d px." % (dx, dy))
+        print("makeobject: raw offset is dx = %+3d px dy = %+3d px." % (dx, dy))
 
-        margin = 512
-        if align is not None:
+        dxlist.append(dx)
+        dylist.append(dy)
+
+    ############################################################################
+
+    margin = 512
+    
+    # Extract the window data.
+
+    windowdatalist = []
+
+    if align is not None:
+    
+        for data, dx, dy in zip(datalist, dxlist, dylist):
 
             aligny = align[0] - margin
             alignx = align[1] - margin
@@ -137,90 +173,51 @@ def makeobject(
             alignylo = aligny + dy - nalignregion // 2
             alignyhi = aligny + dy + nalignregion // 2
 
-            aligndata = data[alignylo:alignyhi, alignxlo:alignxhi].copy()
-            aligndata -= np.nanmedian(aligndata)
-            aligndata = np.nan_to_num(aligndata, nan=0.0)
-            max = np.unravel_index(np.argmax(aligndata, axis=None), aligndata.shape)
-            ddy = max[0] - nalignregion // 2
-            ddx = max[1] - nalignregion // 2
-            print(
-                "makeobject: maximum is offset by ddx = %+d px ddy = %+d px."
-                % (ddx, ddy)
-            )
+            windowdata = data[alignylo:alignyhi, alignxlo:alignxhi].copy()
+            windowdata -= np.nanmedian(windowdata)
+            windowdata = np.nan_to_num(windowdata, nan=0.0)
+            
+            windowdatalist.append(windowdata)
+
+    ############################################################################
+    
+    # Refine the offset
+
+    if align is not None:
+
+        newdxlist = []
+        newdylist = []
+
+        for windowdata, dx, dy in zip(windowdatalist, dxlist, dylist):
+           
+            imax = np.unravel_index(np.argmax(windowdata, axis=None), windowdata.shape)
+            ddy = imax[0] - nalignregion // 2
+            ddx = imax[1] - nalignregion // 2
             dx += ddx
             dy += ddy
             print("makeobject: refined offset is dx = %+d px dy = %+d px." % (dx, dy))
+            
+            newdxlist.append(dx)
+            newdylist.append(dy)
 
-            merit = float(
-                np.max(tenue.image.medianfilter(aligndata, 3))
-                / tenue.image.clippedsigma(aligndata, sigma=3)
-            )
-            print("makeobject: merit is %.1f." % merit)
-            meritlist.append(merit)
+        dxlist = newdxlist
+        dylist = newdylist
 
-            if showalignment:
-                tenue.image.show(aligndata, contrast=0.05, small=True)
-
-        datashape = np.array(data.shape)
-        newdata = np.full(datashape + 2 * margin, np.nan, dtype="float32")
-        xlo = margin - dx
-        xhi = xlo + datashape[1]
-        ylo = margin - dy
-        yhi = ylo + datashape[0]
-        newdata[ylo:yhi, xlo:xhi] = data
-        data = newdata
-
-        yc = int(data.shape[0] / 2)
-        xc = int(data.shape[1] / 2)
-        ys = int(yc - nwindow / 2)
-        xs = int(xc - nwindow / 2)
-        data = data[ys : ys + nwindow, xs : xs + nwindow]
-
-        print("makeobject: subtracting sky.")
-        data -= np.nanmedian(data, keepdims=True)
-
-        return data
-
-    print("makeobject: making %s object from %s." % (filter, fitspaths))
-
-    print("making sky.")
-
-    fitspathlist = tenue.path.getrawfitspaths(fitspaths, filter=filter)
-    if len(fitspathlist) == 0:
-        print("ERROR: no object files found.")
-        return
-
-    if refalpha == None or refdelta == None:
-        print("makeobject: determining reference pointing.")
-        pointinglist = list(readonepointing(fitspath) for fitspath in fitspathlist)
-        refpointing = (np.max(pointinglist, axis=0) + np.min(pointinglist, axis=0)) / 2
-        refalpha = refpointing[0]
-        refdelta = refpointing[1]
-    print(
-        "makeobject: reference pointing is alpha = %.5f deg delta = %.5f deg."
-        % (math.degrees(refalpha), math.degrees(refdelta))
-    )
-
-    global _skydata
-    if doskyimage:
-        skystack = list(readonesky(fitspath) for fitspath in fitspathlist)
-        print("makeobject: making sky image.")
-        _skydata, skysigma = tenue.image.clippedmeanandsigma(skystack, sigma=3, axis=0)
-        sigma = tenue.image.clippedmean(skysigma, sigma=3) / math.sqrt(
-            len(fitspathlist)
-        )
-        print("makeobject: estimated noise in sky image is %.2f DN." % sigma)
-        _skydata[np.where(np.isnan(_skydata))] = 0
-        tenue.image.show(_skydata, zmin=-20, zmax=50)
-        writesky(objectname, filter, name="makeobject")
-    else:
-        _skydata = 0
+    ############################################################################
+    
+    # Determine the merit.
 
     meritlist = []
-    objectlist = list(readoneobject(fitspath) for fitspath in fitspathlist)
-    headerlist = list(tenue.fits.readrawheader(fitspath) for fitspath in fitspathlist)
 
-    if len(meritlist) > 0:
+    if align is not None:
+
+        for windowdata in windowdatalist:
+           
+            merit = float(
+                np.max(tenue.image.medianfilter(windowdata, 3))
+                / tenue.image.clippedsigma(windowdata, sigma=3)
+            )
+            meritlist.append(merit)
 
         plt.figure()
         n, bins = np.histogram(meritlist, bins=50)
@@ -233,15 +230,27 @@ def makeobject(
         plt.ylabel("Cumulative Fraction")
         plt.show()
 
-        noriginal = len(objectlist)
+    ############################################################################
+    
+    # Reject based on merit.
+
+    if len(meritlist) > 0:
+
+        noriginal = len(datalist)
         meritlimit = np.percentile(meritlist, 100 * rejectfraction)
         print(
             "makeobject: rejecting fraction %.2f of images with merit less than %.1f."
             % (rejectfraction, meritlimit)
         )
-        objectlist = list(
-            object
-            for object, merit in zip(objectlist, meritlist)
+
+        fitspathlist = list(
+            fitspath
+            for fitspath, merit in zip(fitspathlist, meritlist)
+            if merit >= meritlimit
+        )
+        datalist = list(
+            data
+            for data, merit in zip(datalist, meritlist)
             if merit >= meritlimit
         )
         headerlist = list(
@@ -249,32 +258,96 @@ def makeobject(
             for header, merit in zip(headerlist, meritlist)
             if merit >= meritlimit
         )
-        nfinal = len(objectlist)
+        dxlist = list(
+            dx
+            for dx, merit in zip(dxlist, meritlist)
+            if merit >= meritlimit
+        )
+        dylist = list(
+            dy
+            for dy, merit in zip(dylist, meritlist)
+            if merit >= meritlimit
+        )
+
+        nfinal = len(datalist)
         print("makeobject: accepted %d images out of %d." % (nfinal, noriginal))
         print(
             "makeobject: rejected %d images out of %d."
             % ((noriginal - nfinal), noriginal)
         )
 
+    ############################################################################
+    
+    # Show the data.
+
+    if align is not None:
+
+        for windowdata in windowdatalist:
+
+          if showwindow:
+                tenue.image.show(windowdata, contrast=0.05, small=True)
+
+    ############################################################################
+    
+    # Produce the aligned data.
+
+    aligneddatalist = []
+    
+    for data, header in zip(datalist, headerlist):
+
+        alpha = math.radians(tenue.instrument.alpha(header))
+        delta = math.radians(tenue.instrument.delta(header))
+        pixelscale = math.radians(tenue.instrument.pixelscale(header))
+        rotation = math.radians(tenue.instrument.rotation(header))
+
+        dalpha = (alpha - refalpha) / pixelscale * math.cos(refdelta)
+        ddelta = (delta - refdelta) / pixelscale
+        dx = +int(np.round(dalpha * math.cos(rotation) - ddelta * math.sin(rotation)))
+        dy = -int(np.round(dalpha * math.sin(rotation) + ddelta * math.cos(rotation)))
+        print("makeobject: raw offset is dx = %+3d px dy = %+3d px." % (dx, dy))
+
+        datashape = np.array(data.shape)
+
+        aligneddata = np.full(datashape + 2 * margin, np.nan, dtype="float32")
+        xlo = margin - dx
+        xhi = xlo + datashape[1]
+        ylo = margin - dy
+        yhi = ylo + datashape[0]
+        aligneddata[ylo:yhi, xlo:xhi] = data
+
+        yc = int(aligneddata.shape[0] / 2)
+        xc = int(aligneddata.shape[1] / 2)
+        ys = int(yc - nwindow / 2)
+        xs = int(xc - nwindow / 2)
+        aligneddata = aligneddata[ys : ys + nwindow, xs : xs + nwindow]
+
+        aligneddata -= np.nanmedian(aligneddata, keepdims=True)
+
+        aligneddatalist.append(aligneddata)
+
+    ############################################################################
+
     global _objectdata
     if sigma is None:
         print(
-            "makeobject: averaging %d object files without rejection." % len(objectlist)
+            "makeobject: averaging %d object files without rejection." % len(aligneddatalist)
         )
-        _objectdata = np.average(objectlist, axis=0)
+        _objectdata = np.average(aligneddatalist, axis=0)
     else:
-        print("makeobject: averaging %d object files with rejection." % len(objectlist))
+        print("makeobject: averaging %d object files with rejection." % len(aligneddatalist))
         _objectdata, objectsigma = tenue.image.clippedmeanandsigma(
-            objectlist, sigma=10, axis=0
+            aligneddatalist, sigma=10, axis=0
         )
         sigma = tenue.image.clippedmean(objectsigma, sigma=3) / math.sqrt(
-            len(fitspathlist)
+            len(aligneddatalist)
         )
         print("makeobject: estimated noise in object image is %.2f DN." % sigma)
 
     tenue.image.show(_objectdata, zscale=True, contrast=0.1)
 
     writeobject(objectname, filter, name="makeobject")
+
+    ############################################################################
 
     # Determine time properties of the stack.
 
@@ -320,6 +393,8 @@ def makeobject(
             )
         )
 
-    print("makeobject: finished.")
+    ############################################################################
 
+    print("makeobject: finished.")
+    
     return
