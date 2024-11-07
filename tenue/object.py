@@ -300,7 +300,9 @@ def makeobject(
 
     if align is not None:
 
-        for windowdata in windowdatalist:
+        for fitspath, merit, windowdata in zip(fitspathlist, meritlist, windowdatalist):
+
+            print("makeobject: %s: merit is %.1f." % (os.path.basename(fitspath), merit))
 
             if showwindow:
                 tenue.image.show(windowdata, contrast=0.05, small=True)
