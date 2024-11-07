@@ -16,11 +16,11 @@ _objectdata = None
 
 
 def writeobject(
-    objectname, filter, path="{objectname}-{filter}.fits", name="writeobject"
+    objectname, filter, path="{objectname}-{filter}.fits", starttimestamp=None, name="writeobject"
 ):
     path = path.format(objectname=objectname, filter=filter)
     print("%s: writing %s." % (name, path))
-    tenue.fits.writeproduct(path, _objectdata, filter=filter)
+    tenue.fits.writeproduct(path, _objectdata, filter=filter, starttimestamp=starttimestamp)
     return
 
 
@@ -345,8 +345,6 @@ def makeobject(
 
     tenue.image.show(_objectdata, zscale=True, contrast=0.1)
 
-    writeobject(objectname, filter, name="makeobject")
-
     ############################################################################
 
     # Determine time properties of the stack.
@@ -394,6 +392,9 @@ def makeobject(
         )
 
     ############################################################################
+
+    writeobject(objectname, filter, starttimestamp=starttimestamp, name="makeobject")
+
 
     print("makeobject: finished.")
     
