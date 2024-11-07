@@ -1,4 +1,12 @@
+import numpy as np
+
 import tenue.instrument
+
+
+def dorotate(header, data):
+    rotation = header["SMTMRO"]
+    return np.rot90(data, -int(rotation / 90))
+
 
 tenue.instrument.setvalues(
     datamax=65535,
@@ -6,6 +14,7 @@ tenue.instrument.setvalues(
     overscanxslice=slice(18, 2065),
     trimyslice=slice(11, 2058),
     trimxslice=slice(18, 2065),
+    dorotate=dorotate,
     filterkeyword="FILTER",
     alphakeyword="SMTMRA",
     deltakeyword="SMTMDE",
