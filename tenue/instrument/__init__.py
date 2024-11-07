@@ -17,6 +17,10 @@ def defaultdorotate(header, data):
     return data
 
 
+def defaultrotation(header):
+    return 0
+
+
 def setvalues(
     datamax=None,
     overscanyslice=None,
@@ -28,11 +32,10 @@ def setvalues(
     exposuretime=defaultexposuretime,
     starttimestamp=defaultstarttimestamp,
     endtimestamp=defaultendtimestamp,
+    rotation=None,
     alphakeyword=None,
     deltakeyword=None,
-    rotationkeyword=None,
     pixelscale=None,
-    rotation=None,
     flatmax=None,
 ):
 
@@ -66,20 +69,17 @@ def setvalues(
     global _endtimestamp
     _endtimestamp = endtimestamp
 
+    global _rotation
+    _rotation = rotation
+
     global _alphakeyword
     _alphakeyword = alphakeyword
 
     global _deltakeyword
     _deltakeyword = deltakeyword
 
-    global _rotationkeyword
-    _rotationkeyword = rotationkeyword
-
     global _pixelscale
     _pixelscale = pixelscale
-
-    global _rotation
-    _rotation = rotation
 
     global _flatmax
     _flatmax = flatmax
@@ -125,6 +125,10 @@ def endtimestamp(header):
     return _endtimestamp(header)
 
 
+def rotation(header):
+    return _rotation(header)
+
+
 def alphakeyword():
     return _alphakeyword
 
@@ -139,10 +143,6 @@ def rotationkeyword():
 
 def pixelscale():
     return _pixelscale
-
-
-def rotation():
-    return _rotation
 
 
 def flatmax():

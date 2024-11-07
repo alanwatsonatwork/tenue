@@ -8,6 +8,10 @@ def dorotate(header, data):
     return np.rot90(data, -int(rotation / 90))
 
 
+def rotation(header):
+    return 63.703
+
+
 tenue.instrument.setvalues(
     datamax=65535,
     overscanyslice=slice(1, 10),
@@ -16,10 +20,9 @@ tenue.instrument.setvalues(
     trimxslice=slice(18, 2065),
     dorotate=dorotate,
     filterkeyword="FILTER",
+    rotation=rotation,
     alphakeyword="SMTMRA",
     deltakeyword="SMTMDE",
-    rotationkeyword="SMTMRO",
     pixelscale=0.40 / 3600,
-    rotation=63.703,
     flatmax=32000,
 )
