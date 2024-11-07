@@ -246,17 +246,6 @@ def makeobject(
             )
             meritlist.append(merit)
 
-        plt.figure()
-        n, bins = np.histogram(meritlist, bins=50)
-        f = np.cumsum(n) / np.sum(n)
-        plt.plot(bins[:-1], f)
-        plt.ylim(0, 1)
-        plt.xlim(left=0)
-        plt.axhline(rejectfraction)
-        plt.xlabel("Merit")
-        plt.ylabel("Cumulative Fraction")
-        plt.show()
-
     ############################################################################
 
     # Reject based on merit.
@@ -269,6 +258,18 @@ def makeobject(
             "makeobject: rejecting fraction %.2f of images with merit less than %.1f."
             % (rejectfraction, meritlimit)
         )
+
+        plt.figure()
+        n, bins = np.histogram(meritlist, bins=50)
+        f = np.cumsum(n) / np.sum(n)
+        plt.plot(bins[:-1], f, color="C0")
+        plt.ylim(0, 1)
+        plt.xlim(left=0)
+        plt.axhline(meritlimit, color="C1")
+        plt.axvline(rejectfraction, color="C1")
+        plt.xlabel("Merit")
+        plt.ylabel("Cumulative Fraction")
+        plt.show()
 
         fitspathlist = list(
             fitspath
@@ -310,18 +311,7 @@ def makeobject(
 
     aligneddatalist = []
 
-    for data, header in zip(datalist, headerlist):
-
-        alpha = math.radians(tenue.instrument.alpha(header))
-        delta = math.radians(tenue.instrument.delta(header))
-        pixelscale = math.radians(tenue.instrument.pixelscale(header))
-        rotation = math.radians(tenue.instrument.rotation(header))
-
-        dalpha = (alpha - refalpha) / pixelscale * math.cos(refdelta)
-        ddelta = (delta - refdelta) / pixelscale
-        dx = +int(np.round(dalpha * math.cos(rotation) - ddelta * math.sin(rotation)))
-        dy = -int(np.round(dalpha * math.sin(rotation) + ddelta * math.cos(rotation)))
-        print("makeobject: raw offset is dx = %+3d px dy = %+3d px." % (dx, dy))
+    for data, dx, dy in zip(datalist, dxlist, dylist):
 
         datashape = np.array(data.shape)
 
