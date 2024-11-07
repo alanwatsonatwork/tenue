@@ -54,7 +54,9 @@ def uniformfilter(data, size):
     return scipy.ndimage.filters.uniform_filter(data, size=size, mode="nearest")
 
 
-def show(data, zrange=False, zscale=False, contrast=0.25, zmin=None, zmax=None, small=False):
+def show(
+    data, zrange=False, zscale=False, contrast=0.25, zmin=None, zmax=None, small=False
+):
 
     if zmin is not None and zmax is not None:
         interval = astropy.visualization.ManualInterval(zmin, zmax)
