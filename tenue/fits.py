@@ -1,6 +1,7 @@
 import numpy as np
 import astropy.io.fits
 
+
 def _ihdu(fitspath):
     """
     Return the HDU index for the actual data in a FITS file. This is 0
