@@ -155,27 +155,22 @@ def usefakeflat():
     return _flatdata
 
 
-def makebias(fitspaths, biaspath="bias.fits"):
+def makebias(fitspaths, biaspath="bias.fits", fitspathsslice=None):
 
     print("makebias: making bias from %s." % (fitspaths))
 
-    fitspathlist = tenue.path.getrawfitspaths(fitspaths)
+    fitspathlist = tenue.path.getrawfitspaths(fitspaths, exposuretime=0, fitspathsslice=fitspathsslice)
 
+    if len(fitspathlist) == 0:
+        print("ERROR: no bias files found.")
+        return
+
+    headerlist = []
     datalist = []
     for fitspath in fitspathlist:
         header, data = cook(fitspath, name="makebias", dooverscan=True, dotrim=True)
-        if tenue.instrument.exposuretime(header) == 0:
-            print("makebias: accepted %s." % os.path.basename(fitspath))
-            datalist.append(data)
-        else:
-            print(
-                "makebias: rejected %s: wrong exposure time."
-                % os.path.basename(fitspath)
-            )
-
-    if len(datalist) == 0:
-        print("ERROR: no bias files found.")
-        return
+        headerlist.append(header)
+        datalist.append(data)
 
     print("makebias: averaging %d biases with rejection." % len(datalist))
     global _biasdata
@@ -196,29 +191,22 @@ def makebias(fitspaths, biaspath="bias.fits"):
     return
 
 
-def makedark(fitspaths, exposuretime, darkpath="dark-{exposuretime}.fits"):
+def makedark(fitspaths, exposuretime, darkpath="dark-{exposuretime}.fits", fitspathsslice=None):
 
     print("makedark: making %.0f second dark from %s." % (exposuretime, fitspaths))
 
-    fitspathlist = tenue.path.getrawfitspaths(fitspaths)
+    fitspathlist = tenue.path.getrawfitspaths(fitspaths, exposuretime=exposuretime, fitspathsslice=fitspathsslice)
 
-    datalist = []
-    for fitspath in fitspathlist:
-        header, data = cook(
-            fitspath, name="makedark", dooverscan=True, dotrim=True, dobias=True
-        )
-        if tenue.instrument.exposuretime(header) == exposuretime:
-            print("makedark: accepted %s." % os.path.basename(fitspath))
-            datalist.append(data)
-        else:
-            print(
-                "makedark: rejected %s: wrong exposure time."
-                % os.path.basename(fitspath)
-            )
-
-    if len(datalist) == 0:
+    if len(fitspathlist) == 0:
         print("ERROR: no dark files found.")
         return
+
+    headerlist = []
+    datalist = []
+    for fitspath in fitspathlist:
+        header, data = cook(fitspath, name="makedark", dooverscan=True, dotrim=True, dobias=True)
+        headerlist.append(header)
+        datalist.append(data)
 
     print("makedark: averaging %d darks with rejection." % len(datalist))
     global _darkdata
@@ -239,7 +227,7 @@ def makedark(fitspaths, exposuretime, darkpath="dark-{exposuretime}.fits"):
     return
 
 
-def makeflat(fitspaths, filter, flatpath="flat-{filter}.fits"):
+def makeflat(fitspaths, filter, flatpath="flat-{filter}.fits", fitspathsslice=None):
 
     ############################################################################
 
@@ -249,21 +237,16 @@ def makeflat(fitspaths, filter, flatpath="flat-{filter}.fits"):
 
     print("makeflat: making flat without mask.")
 
-    fitspathlist = tenue.path.getrawfitspaths(fitspaths)
+    fitspathlist = tenue.path.getrawfitspaths(fitspaths, filter=filter, fitspathsslice=fitspathsslice)
 
+    if len(fitspathlist) == 0:
+        print("ERROR: no flat files found.")
+        return
+
+    headerlist = []
     datalist = []
     for fitspath in fitspathlist:
-        header, data = cook(
-            fitspath,
-            name="makeflat",
-            dooverscan=True,
-            dotrim=True,
-            dobias=True,
-            dodark=True,
-        )
-        if tenue.instrument.filter(header) != filter:
-            print("makedark: rejected %s: wrong filter." % os.path.basename(fitspath))
-            continue
+        header, data = cook(fitspath, name="makeflat", dooverscan=True, dotrim=True, dobias=True, dodark=True)
         if np.isnan(data).all():
             print("makedark: rejected %s: no valid data." % os.path.basename(fitspath))
             continue
@@ -274,11 +257,8 @@ def makeflat(fitspaths, filter, flatpath="flat-{filter}.fits"):
             continue
         print("makeflat: accepted %s." % os.path.basename(fitspath))
         data /= median
+        headerlist.append(header)
         datalist.append(data)
-
-    if len(datalist) == 0:
-        print("ERROR: no flat files found.")
-        return
 
     print("makeflat: averaging %d flats with rejection." % (len(datalist)))
 
