@@ -77,7 +77,6 @@ def makeobject(
             dobias=True,
             dodark=True,
             doflat=True,
-            domask=True,
             dowindow=False,
             dosky=True,
             dorotate=True,
@@ -102,7 +101,6 @@ def makeobject(
             dobias=True,
             dodark=True,
             doflat=True,
-            domask=True,
             dowindow=False,
             dosky=True,
             dorotate=True,
@@ -184,9 +182,9 @@ def makeobject(
         return data
 
     print("makeobject: making %s object from %s." % (filter, fitspaths))
-    
+
     print("making sky.")
-    
+
     fitspathlist = tenue.path.getrawfitspaths(fitspaths, filter=filter)
     if len(fitspathlist) == 0:
         print("ERROR: no object files found.")
