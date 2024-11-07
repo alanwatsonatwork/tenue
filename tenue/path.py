@@ -21,9 +21,9 @@ def getrawfitspaths(fitspaths, filter=None, exposuretime=None, fitspathsslice=No
             == exposuretime
         )
     if fitspathsslice == "firsthalf":
-        fitspathsslice = slice(None,len(fitspaths)//2)
+        fitspathsslice = slice(None, len(fitspaths) // 2)
     elif fitspathsslice == "secondhalf":
-        fitspathsslice = slice(len(fitspaths)//2,None)
+        fitspathsslice = slice(len(fitspaths) // 2, None)
     if fitspathsslice is not None:
         fitspaths = fitspaths[fitspathsslice]
     return fitspaths

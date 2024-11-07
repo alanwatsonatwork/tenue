@@ -16,24 +16,39 @@ _objectdata = None
 
 
 def writeobject(
-    objectname, filter, path="{objectname}-{filter}.fits", starttimestamp=None, name="writeobject"
+    objectname,
+    filter,
+    path="{objectname}-{filter}.fits",
+    starttimestamp=None,
+    exposuretime=None,
+    name="writeobject",
 ):
     path = path.format(objectname=objectname, filter=filter)
     print("%s: writing %s." % (name, path))
-    tenue.fits.writeproduct(path, _objectdata, filter=filter, starttimestamp=starttimestamp)
+    tenue.fits.writeproduct(
+        path,
+        _objectdata,
+        filter=filter,
+        starttimestamp=starttimestamp,
+        exposuretime=exposuretime,
+    )
     return
 
 
 def writesky(
-    objectname, filter, path="{objectname}-{filter}-sky.fits", name="writesky"
+    objectname,
+    filter,
+    path="{objectname}-{filter}-sky.fits",
+    exposuretime=None,
+    name="writesky",
 ):
     path = path.format(objectname=objectname, filter=filter)
     print("%s: writing %s." % (name, path))
-    tenue.fits.writeproduct(path, _skydata, filter=filter)
+    tenue.fits.writeproduct(path, _skydata, filter=filter, exposuretime=exposuretime)
     return
 
 
-def _makesky(datalist, filter=filter, skyclip=None, objectname=None):
+def _makesky(headerlist, datalist, filter=filter, skyclip=None, objectname=None):
 
     newdatalist = []
     for data in datalist:
@@ -48,9 +63,16 @@ def _makesky(datalist, filter=filter, skyclip=None, objectname=None):
     global _skydata
     _skydata, skysigma = tenue.image.clippedmeanandsigma(newdatalist, sigma=3, axis=0)
     sigma = tenue.image.clippedmean(skysigma, sigma=3) / math.sqrt(len(datalist))
+    totalexposuretime = np.sum(
+        (tenue.instrument.exposuretime(header) for header in headerlist)
+    )
+    print(
+        "makeobject: total exposure time in sky images is %.0f seconds."
+        % totalexposuretime
+    )
     print("makeobject: estimated noise in sky image is %.2f DN." % sigma)
     tenue.image.show(_skydata, zmin=-20, zmax=50)
-    writesky(objectname, filter, name="makeobject")
+    writesky(objectname, filter, exposuretime=totalexposuretime, name="makeobject")
 
 
 def makeobject(
@@ -75,7 +97,9 @@ def makeobject(
 
     print("makeobject: making %s object from %s." % (filter, fitspaths))
 
-    fitspathlist = tenue.path.getrawfitspaths(fitspaths, filter=filter, fitspathsslice=fitspathsslice)
+    fitspathlist = tenue.path.getrawfitspaths(
+        fitspaths, filter=filter, fitspathsslice=fitspathsslice
+    )
 
     if len(fitspathlist) == 0:
         print("ERROR: no dark files found.")
@@ -88,7 +112,15 @@ def makeobject(
     headerlist = []
     datalist = []
     for fitspath in fitspathlist:
-        header, data = tenue.cook.cook(fitspath, name="makeobject", dooverscan=True, dotrim=True, dobias=True, dodark=True, dorotate=True)
+        header, data = tenue.cook.cook(
+            fitspath,
+            name="makeobject",
+            dooverscan=True,
+            dotrim=True,
+            dobias=True,
+            dodark=True,
+            dorotate=True,
+        )
         headerlist.append(header)
         datalist.append(data)
 
@@ -117,7 +149,7 @@ def makeobject(
     ############################################################################
 
     if doskyimage:
-        _makesky(datalist, filter, skyclip=skyclip, objectname=objectname)
+        _makesky(headerlist, datalist, filter, skyclip=skyclip, objectname=objectname)
 
     for data in datalist:
         data -= np.nanmedian(data)
@@ -130,7 +162,7 @@ def makeobject(
     dylist = []
 
     for header in headerlist:
-    
+
         alpha = math.radians(tenue.instrument.alpha(header))
         delta = math.radians(tenue.instrument.delta(header))
         pixelscale = math.radians(tenue.instrument.pixelscale(header))
@@ -148,13 +180,13 @@ def makeobject(
     ############################################################################
 
     margin = 512
-    
+
     # Extract the window data.
 
     windowdatalist = []
 
     if align is not None:
-    
+
         for data, dx, dy in zip(datalist, dxlist, dylist):
 
             aligny = align[0] - margin
@@ -170,11 +202,11 @@ def makeobject(
             windowdata = data[alignylo:alignyhi, alignxlo:alignxhi].copy()
             windowdata -= np.nanmedian(windowdata)
             windowdata = np.nan_to_num(windowdata, nan=0.0)
-            
+
             windowdatalist.append(windowdata)
 
     ############################################################################
-    
+
     # Refine the offset
 
     if align is not None:
@@ -183,14 +215,14 @@ def makeobject(
         newdylist = []
 
         for windowdata, dx, dy in zip(windowdatalist, dxlist, dylist):
-           
+
             imax = np.unravel_index(np.argmax(windowdata, axis=None), windowdata.shape)
             ddy = imax[0] - nalignregion // 2
             ddx = imax[1] - nalignregion // 2
             dx += ddx
             dy += ddy
             print("makeobject: refined offset is dx = %+d px dy = %+d px." % (dx, dy))
-            
+
             newdxlist.append(dx)
             newdylist.append(dy)
 
@@ -198,7 +230,7 @@ def makeobject(
         dylist = newdylist
 
     ############################################################################
-    
+
     # Determine the merit.
 
     meritlist = []
@@ -206,7 +238,7 @@ def makeobject(
     if align is not None:
 
         for windowdata in windowdatalist:
-           
+
             merit = float(
                 np.max(tenue.image.medianfilter(windowdata, 3))
                 / tenue.image.clippedsigma(windowdata, sigma=3)
@@ -225,7 +257,7 @@ def makeobject(
         plt.show()
 
     ############################################################################
-    
+
     # Reject based on merit.
 
     if len(meritlist) > 0:
@@ -243,25 +275,15 @@ def makeobject(
             if merit >= meritlimit
         )
         datalist = list(
-            data
-            for data, merit in zip(datalist, meritlist)
-            if merit >= meritlimit
+            data for data, merit in zip(datalist, meritlist) if merit >= meritlimit
         )
         headerlist = list(
             header
             for header, merit in zip(headerlist, meritlist)
             if merit >= meritlimit
         )
-        dxlist = list(
-            dx
-            for dx, merit in zip(dxlist, meritlist)
-            if merit >= meritlimit
-        )
-        dylist = list(
-            dy
-            for dy, merit in zip(dylist, meritlist)
-            if merit >= meritlimit
-        )
+        dxlist = list(dx for dx, merit in zip(dxlist, meritlist) if merit >= meritlimit)
+        dylist = list(dy for dy, merit in zip(dylist, meritlist) if merit >= meritlimit)
 
         nfinal = len(datalist)
         print("makeobject: accepted %d images out of %d." % (nfinal, noriginal))
@@ -271,22 +293,22 @@ def makeobject(
         )
 
     ############################################################################
-    
+
     # Show the data.
 
     if align is not None:
 
         for windowdata in windowdatalist:
 
-          if showwindow:
+            if showwindow:
                 tenue.image.show(windowdata, contrast=0.05, small=True)
 
     ############################################################################
-    
+
     # Produce the aligned data.
 
     aligneddatalist = []
-    
+
     for data, header in zip(datalist, headerlist):
 
         alpha = math.radians(tenue.instrument.alpha(header))
@@ -324,11 +346,15 @@ def makeobject(
     global _objectdata
     if sigma is None:
         print(
-            "makeobject: averaging %d object files without rejection." % len(aligneddatalist)
+            "makeobject: averaging %d object files without rejection."
+            % len(aligneddatalist)
         )
         _objectdata = np.average(aligneddatalist, axis=0)
     else:
-        print("makeobject: averaging %d object files with rejection." % len(aligneddatalist))
+        print(
+            "makeobject: averaging %d object files with rejection."
+            % len(aligneddatalist)
+        )
         _objectdata, objectsigma = tenue.image.clippedmeanandsigma(
             aligneddatalist, sigma=10, axis=0
         )
@@ -342,15 +368,11 @@ def makeobject(
     ############################################################################
 
     # Determine time properties of the stack.
-    
+
     totalexposuretime = np.sum(
         (tenue.instrument.exposuretime(header) for header in headerlist)
     )
-    print(
-        "makeobject: total exposure time is %.0f seconds."
-        % totalexposuretime
-    )
-    
+    print("makeobject: total exposure time is %.0f seconds." % totalexposuretime)
 
     starttimestamp = min(
         (tenue.instrument.starttimestamp(header) for header in headerlist)
@@ -396,9 +418,14 @@ def makeobject(
 
     ############################################################################
 
-    writeobject(objectname, filter, starttimestamp=starttimestamp, name="makeobject")
-
+    writeobject(
+        objectname,
+        filter,
+        starttimestamp=starttimestamp,
+        exposuretime=totalexposuretime,
+        name="makeobject",
+    )
 
     print("makeobject: finished.")
-    
+
     return

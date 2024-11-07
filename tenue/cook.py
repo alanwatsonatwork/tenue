@@ -47,14 +47,14 @@ def readflat(filter, path="flat-{filter}.fits", name="readflat"):
 
 def writebias(path="bias.fits", name="writebias"):
     print("%s: writing %s." % (name, path))
-    tenue.fits.writeproduct(path, _biasdata)
+    tenue.fits.writeproduct(path, _biasdata, exposuretime=0)
     return
 
 
 def writedark(path="dark-{exposuretime:.0f}.fits", exposuretime=None, name="writebias"):
     path = path.format(exposuretime=exposuretime)
     print("%s: writing %s." % (name, path))
-    tenue.fits.writeproduct(path, _darkdata)
+    tenue.fits.writeproduct(path, _darkdata, exposuretime=exposuretime)
     return
 
 
@@ -159,7 +159,9 @@ def makebias(fitspaths, biaspath="bias.fits", fitspathsslice=None):
 
     print("makebias: making bias from %s." % (fitspaths))
 
-    fitspathlist = tenue.path.getrawfitspaths(fitspaths, exposuretime=0, fitspathsslice=fitspathsslice)
+    fitspathlist = tenue.path.getrawfitspaths(
+        fitspaths, exposuretime=0, fitspathsslice=fitspathsslice
+    )
 
     if len(fitspathlist) == 0:
         print("ERROR: no bias files found.")
@@ -191,11 +193,15 @@ def makebias(fitspaths, biaspath="bias.fits", fitspathsslice=None):
     return
 
 
-def makedark(fitspaths, exposuretime, darkpath="dark-{exposuretime}.fits", fitspathsslice=None):
+def makedark(
+    fitspaths, exposuretime, darkpath="dark-{exposuretime}.fits", fitspathsslice=None
+):
 
     print("makedark: making %.0f second dark from %s." % (exposuretime, fitspaths))
 
-    fitspathlist = tenue.path.getrawfitspaths(fitspaths, exposuretime=exposuretime, fitspathsslice=fitspathsslice)
+    fitspathlist = tenue.path.getrawfitspaths(
+        fitspaths, exposuretime=exposuretime, fitspathsslice=fitspathsslice
+    )
 
     if len(fitspathlist) == 0:
         print("ERROR: no dark files found.")
@@ -204,7 +210,9 @@ def makedark(fitspaths, exposuretime, darkpath="dark-{exposuretime}.fits", fitsp
     headerlist = []
     datalist = []
     for fitspath in fitspathlist:
-        header, data = cook(fitspath, name="makedark", dooverscan=True, dotrim=True, dobias=True)
+        header, data = cook(
+            fitspath, name="makedark", dooverscan=True, dotrim=True, dobias=True
+        )
         headerlist.append(header)
         datalist.append(data)
 
@@ -237,7 +245,9 @@ def makeflat(fitspaths, filter, flatpath="flat-{filter}.fits", fitspathsslice=No
 
     print("makeflat: making flat without mask.")
 
-    fitspathlist = tenue.path.getrawfitspaths(fitspaths, filter=filter, fitspathsslice=fitspathsslice)
+    fitspathlist = tenue.path.getrawfitspaths(
+        fitspaths, filter=filter, fitspathsslice=fitspathsslice
+    )
 
     if len(fitspathlist) == 0:
         print("ERROR: no flat files found.")
@@ -246,7 +256,14 @@ def makeflat(fitspaths, filter, flatpath="flat-{filter}.fits", fitspathsslice=No
     headerlist = []
     datalist = []
     for fitspath in fitspathlist:
-        header, data = cook(fitspath, name="makeflat", dooverscan=True, dotrim=True, dobias=True, dodark=True)
+        header, data = cook(
+            fitspath,
+            name="makeflat",
+            dooverscan=True,
+            dotrim=True,
+            dobias=True,
+            dodark=True,
+        )
         if np.isnan(data).all():
             print("makedark: rejected %s: no valid data." % os.path.basename(fitspath))
             continue
