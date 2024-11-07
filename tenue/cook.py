@@ -103,11 +103,11 @@ def cook(
     data = tenue.fits.readrawdata(fitspath)
 
     # Set invalid pixels to nan.
-    data[np.where(data == tenue.instrument.datamax())] = np.nan
+    data[np.where(data == tenue.instrument.datamax(header))] = np.nan
 
     if dooverscan:
         overscandata = data[
-            tenue.instrument.overscanyslice(), tenue.instrument.overscanxslice()
+            tenue.instrument.overscanyslice(header), tenue.instrument.overscanxslice(header)
         ]
         mean = tenue.image.clippedmean(overscandata, sigma=3)
         mean = tenue.image.clippedmean(overscandata, sigma=3)
@@ -118,7 +118,7 @@ def cook(
 
     if dotrim:
         print("%s: trimming." % (name))
-        data = data[tenue.instrument.trimyslice(), tenue.instrument.trimxslice()]
+        data = data[tenue.instrument.trimyslice(header), tenue.instrument.trimxslice(header)]
 
     if dobias:
         print("%s: subtracting bias." % (name))
@@ -263,6 +263,7 @@ def makeflatandmask(
 ):
 
     def readoneflat(fitspath):
+        header = tenue.fits.readrawheader(fitspath)
         data = cook(
             fitspath,
             name="makeflatandmask",
@@ -277,7 +278,7 @@ def makeflatandmask(
             return None
         median = np.nanmedian(data)
         print("makeflatandmask: median is %.2f DN." % median)
-        if median > tenue.instrument.flatmax():
+        if median > tenue.instrument.flatmax(header):
             print("makeflatandmask: rejecting image: median too high.")
             return None
         else:

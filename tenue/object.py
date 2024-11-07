@@ -55,8 +55,8 @@ def makeobject(
             "makeobject: reading pointing for %s object file %s."
             % (filter, os.path.basename(fitspath))
         )
-        alpha = math.radians(header[tenue.instrument.alphakeyword()])
-        delta = math.radians(header[tenue.instrument.deltakeyword()])
+        alpha = math.radians(tenue.instrument.alpha(header))
+        delta = math.radians(tenue.instrument.delta(header))
         print(
             "makeobject: pointing is alpha = %.5f deg delta = %.5f deg."
             % (math.degrees(alpha), math.degrees(delta))
@@ -111,9 +111,9 @@ def makeobject(
 
         header = tenue.fits.readrawheader(fitspath)
 
-        alpha = math.radians(header[tenue.instrument.alphakeyword()])
-        delta = math.radians(header[tenue.instrument.deltakeyword()])
-        pixelscale = math.radians(tenue.instrument.pixelscale())
+        alpha = math.radians(tenue.instrument.alpha(header))
+        delta = math.radians(tenue.instrument.delta(header))
+        pixelscale = math.radians(tenue.instrument.pixelscale(header))
         rotation = math.radians(tenue.instrument.rotation(header))
 
         print(

@@ -3,26 +3,51 @@ import numpy as np
 import tenue.instrument
 
 
+def overscanyslice(header):
+    return slice(1, 10)
+
+
+def overscanxslice(header):
+    return slice(18, 2065)
+
+
+def trimyslice(header):
+    return slice(11, 2058)
+
+
+def trimxslice(header):
+    return slice(18, 2065)
+
+
 def dorotate(header, data):
     rotation = header["SMTMRO"]
     return np.rot90(data, -int(rotation / 90))
+
+
+def alpha(header):
+    return header["SMTMRA"]
+
+
+def delta(header):
+    return header["SMTMDE"]
 
 
 def rotation(header):
     return 63.703
 
 
+def pixelscale(header):
+    return 0.40 / 3600
+
+
 tenue.instrument.setvalues(
-    datamax=65535,
-    overscanyslice=slice(1, 10),
-    overscanxslice=slice(18, 2065),
-    trimyslice=slice(11, 2058),
-    trimxslice=slice(18, 2065),
+    overscanxslice=overscanxslice,
+    overscanyslice=overscanyslice,
+    trimxslice=trimxslice,
+    trimyslice=trimyslice,
     dorotate=dorotate,
-    filterkeyword="FILTER",
     rotation=rotation,
-    alphakeyword="SMTMRA",
-    deltakeyword="SMTMDE",
-    pixelscale=0.40 / 3600,
-    flatmax=32000,
+    alpha=alpha,
+    delta=delta,
+    pixelscale=pixelscale,
 )

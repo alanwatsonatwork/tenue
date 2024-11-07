@@ -1,6 +1,22 @@
 from datetime import datetime
 
 
+def defaultdatamax(header):
+    return 65535
+
+
+def defaultflatmax(header):
+    return 32767
+
+
+def defaultdorotate(header, data):
+    return data
+
+
+def defaultfilter(header):
+    return header["FILTER"]
+
+
 def defaultexposuretime(header):
     return header["EXPTIME"]
 
@@ -13,34 +29,45 @@ def defaultendtimestamp(header):
     return starttimestamp(header) + exposuretime(header)
 
 
-def defaultdorotate(header, data):
-    return data
-
-
 def defaultrotation(header):
-    return 0
+    return header["CROTA2"]
+
+
+def defaultalpha(header):
+    return header["CRVAL1"]
+
+
+def defaultdelta(heafer):
+    return header["CRVAL2"]
+
+
+def defaultpixelscale(header):
+    return header["CDELT2"]
 
 
 def setvalues(
-    datamax=None,
+    datamax=defaultdatamax,
+    flatmax=defaultflatmax,
     overscanyslice=None,
     overscanxslice=None,
     trimyslice=None,
     trimxslice=None,
     dorotate=defaultdorotate,
-    filterkeyword=None,
+    filter=defaultfilter,
     exposuretime=defaultexposuretime,
     starttimestamp=defaultstarttimestamp,
     endtimestamp=defaultendtimestamp,
-    rotation=None,
-    alphakeyword=None,
-    deltakeyword=None,
-    pixelscale=None,
-    flatmax=None,
+    rotation=defaultrotation,
+    alpha=defaultalpha,
+    delta=defaultdelta,
+    pixelscale=defaultpixelscale,
 ):
 
     global _datamax
     _datamax = datamax
+
+    global _flatmax
+    _flatmax = flatmax
 
     global _overscanyslice
     _overscanyslice = overscanyslice
@@ -57,8 +84,8 @@ def setvalues(
     global _dorotate
     _dorotate = dorotate
 
-    global _filterkeyword
-    _filterkeyword = filterkeyword
+    global _filter
+    _filter = filter
 
     global _exposuretime
     _exposuretime = exposuretime
@@ -72,45 +99,46 @@ def setvalues(
     global _rotation
     _rotation = rotation
 
-    global _alphakeyword
-    _alphakeyword = alphakeyword
+    global _alpha
+    _alpha = alpha
 
-    global _deltakeyword
-    _deltakeyword = deltakeyword
+    global _delta
+    _delta = delta
 
     global _pixelscale
     _pixelscale = pixelscale
 
-    global _flatmax
-    _flatmax = flatmax
+
+def datamax(header):
+    return _datamax(header)
 
 
-def datamax():
-    return _datamax
+def flatmax(header):
+    return _flatmax(header)
 
 
-def overscanyslice():
-    return _overscanyslice
+def overscanyslice(header):
+    return _overscanyslice(header)
 
 
-def overscanxslice():
-    return _overscanxslice
+def overscanxslice(header):
+    return _overscanxslice(header)
 
 
-def trimyslice():
-    return _trimyslice
+def trimyslice(header):
+    return _trimyslice(header)
 
 
-def trimxslice():
-    return _trimxslice
+def trimxslice(header):
+    return _trimxslice(header)
 
 
 def dorotate(header, data):
     return _dorotate(header, data)
 
 
-def filterkeyword():
-    return _filterkeyword
+def filter(header):
+    return _filter(header)
 
 
 def exposuretime(header):
@@ -129,21 +157,13 @@ def rotation(header):
     return _rotation(header)
 
 
-def alphakeyword():
-    return _alphakeyword
+def alpha(header):
+    return _alpha(header)
 
 
-def deltakeyword():
-    return _deltakeyword
+def delta(header):
+    return _delta(header)
 
 
-def rotationkeyword():
-    return _rotationkeyword
-
-
-def pixelscale():
-    return _pixelscale
-
-
-def flatmax():
-    return _flatmax
+def pixelscale(header):
+    return _pixelscale(header)

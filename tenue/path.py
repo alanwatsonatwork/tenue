@@ -11,8 +11,7 @@ def getrawfitspaths(fitspaths, filter=None, exposuretime=None):
         fitspaths = list(
             fitspath
             for fitspath in fitspaths
-            if tenue.fits.readrawheader(fitspath)[tenue.instrument.filterkeyword()]
-            == filter
+            if tenue.instrument.filter(tenue.fits.readrawheader(fitspath)) == filter
         )
     if exposuretime != None:
         fitspaths = list(
