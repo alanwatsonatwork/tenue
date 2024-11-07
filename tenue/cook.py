@@ -145,11 +145,7 @@ def cook(
 
     if dorotate:
         print("%s: rotating to standard orientation." % (name))
-        rotation = header["SMTMRO"]
-        if tenue.instrument.rotationpositive():
-            data = np.rot90(data, +int(rotation / 90))
-        else:
-            data = np.rot90(data, -int(rotation / 90))
+        data = tenue.instrument.dorotate(header, data)
 
     if dowindow:
         print("%s: windowing." % (name))

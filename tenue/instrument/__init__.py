@@ -13,12 +13,17 @@ def defaultendtimestamp(header):
     return starttimestamp(header) + exposuretime(header)
 
 
+def defaultdorotate(header, data):
+    return data
+
+
 def setvalues(
     datamax=None,
     overscanyslice=None,
     overscanxslice=None,
     trimyslice=None,
     trimxslice=None,
+    dorotate=defaultdorotate,
     filterkeyword=None,
     exposuretime=defaultexposuretime,
     starttimestamp=defaultstarttimestamp,
@@ -28,7 +33,6 @@ def setvalues(
     rotationkeyword=None,
     pixelscale=None,
     rotation=None,
-    rotationpositive=None,
     flatmax=None,
 ):
 
@@ -46,6 +50,9 @@ def setvalues(
 
     global _trimxslice
     _trimxslice = trimxslice
+
+    global _dorotate
+    _dorotate = dorotate
 
     global _filterkeyword
     _filterkeyword = filterkeyword
@@ -74,9 +81,6 @@ def setvalues(
     global _rotation
     _rotation = rotation
 
-    global _rotationpositive
-    _rotationpositive = rotationpositive
-
     global _flatmax
     _flatmax = flatmax
 
@@ -99,6 +103,10 @@ def trimyslice():
 
 def trimxslice():
     return _trimxslice
+
+
+def dorotate(header, data):
+    return _dorotate(header, data)
 
 
 def filterkeyword():
@@ -135,10 +143,6 @@ def pixelscale():
 
 def rotation():
     return _rotation
-
-
-def rotationpositive():
-    return _rotationpositive
 
 
 def flatmax():
