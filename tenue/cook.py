@@ -98,7 +98,7 @@ def cook(
     dorotate=False,
 ):
 
-    print("%s: reading file %s." % (name, os.path.basename(fitspath)))
+    print("%s: reading %s." % (name, os.path.basename(fitspath)))
     header, data = tenue.fits.readraw(fitspath)
 
     # Set invalid pixels to nan.
@@ -183,18 +183,21 @@ def usefakemask():
 
 
 def makebias(fitspaths, biaspath="bias.fits"):
-    def readonebias(fitspath):
-        header, data = cook(fitspath, name="makebias", dooverscan=True, dotrim=True)
-        return data
 
     print("makebias: making bias from %s." % (fitspaths))
 
     fitspathlist = tenue.path.getrawfitspaths(fitspaths)
-    if len(fitspathlist) == 0:
-        print("ERROR: no bias files found.")
-        return
 
-    datalist = list(readonebias(fitspath) for fitspath in fitspathlist)
+    datalist = []
+    for fitspath in fitspathlist:
+        header, data = cook(
+            fitspath, name="makebias", dooverscan=True, dotrim=True
+        )
+        if tenue.instrument.exposuretime(header) == 0:
+            print("makebias: accepted %s." % os.path.basename(fitspath))
+            datalist.append(data)
+        else:
+            print("makebias: rejected %s: wrong exposure time." % os.path.basename(fitspath))
 
     if len(datalist) == 0:
         print("ERROR: no bias files found.")
@@ -221,20 +224,20 @@ def makebias(fitspaths, biaspath="bias.fits"):
 
 def makedark(fitspaths, exposuretime, darkpath="dark-{exposuretime}.fits"):
 
-    def readonedark(fitspath):
+    print("makedark: making %.0f second dark from %s." % (exposuretime, fitspaths))
+
+    fitspathlist = tenue.path.getrawfitspaths(fitspaths)
+
+    datalist = []
+    for fitspath in fitspathlist:
         header, data = cook(
             fitspath, name="makedark", dooverscan=True, dotrim=True, dobias=True
         )
-        return data
-
-    print("makedark: making %.0f second dark from %s." % (exposuretime, fitspaths))
-
-    fitspathlist = tenue.path.getrawfitspaths(fitspaths, exposuretime=exposuretime)
-    if len(fitspathlist) == 0:
-        print("ERROR: no dark files found.")
-        return
-
-    datalist = list(readonedark(fitspath) for fitspath in fitspathlist)
+        if tenue.instrument.exposuretime(header) == exposuretime:
+            print("makedark: accepted %s." % os.path.basename(fitspath))
+            datalist.append(data)
+        else:
+            print("makedark: rejected %s: wrong exposure time." % os.path.basename(fitspath))
 
     if len(datalist) == 0:
         print("ERROR: no dark files found.")
@@ -263,102 +266,112 @@ def makeflatandmask(
     fitspaths, filter, flatpath="flat-{filter}.fits", maskpath="mask-{filter}.fits"
 ):
 
-    def readoneflat(fitspath):
+    ############################################################################
+
+    print("makeflatandmask: making %s flat and mask from %s." % (filter, fitspaths))
+
+    ############################################################################
+
+    print("makeflatandmask: making fake mask.")
+
+    usefakemask()
+    
+    ############################################################################
+
+    print("makeflatandmask: making flat with fake mask.")
+
+    fitspathlist = tenue.path.getrawfitspaths(fitspaths)
+    
+    datalist = []
+    for fitspath in fitspathlist:
         header, data = cook(
-            fitspath,
-            name="makeflatandmask",
-            dooverscan=True,
-            dotrim=True,
-            dobias=True,
-            dodark=True,
-            domask=True,
+            fitspath, name="makeflatandmask", dooverscan=True, dotrim=True, dobias=True, dodark=True, domask=True
         )
+        if tenue.instrument.filter(header) != filter:
+            print("makedark: rejected %s: wrong filter." % os.path.basename(fitspath))
+            continue
         if np.isnan(data).all():
-            print("makeflatandmask: rejecting image: no valid data.")
-            return None
+            print("makedark: rejected %s: no valid data." % os.path.basename(fitspath))
+            continue
         median = np.nanmedian(data)
         print("makeflatandmask: median is %.2f DN." % median)
         if median > tenue.instrument.flatmax(header):
             print("makeflatandmask: rejecting image: median too high.")
-            return None
-        else:
-            print("makeflatandmask: accepting image.")
-            data /= median
-            return data
+            continue
+        print("makeflatandmask: accepted %s." % os.path.basename(fitspath))
+        data /= median
+        datalist.append(data)
 
-    def makeflathelper():
-        datalist = list(readoneflat(fitspath) for fitspath in fitspathlist)
-        datalist = list(data for data in datalist if data is not None)
-        print("makeflatandmask: averaging %d flats with rejection." % (len(datalist)))
-        flatdata, flatsigma = tenue.image.clippedmeanandsigma(datalist, sigma=3, axis=0)
-
-        mean, sigma = tenue.image.clippedmeanandsigma(flatdata, sigma=5)
-        print("makeflatandmask: flat is %.2f ± %.3f." % (mean, sigma))
-
-        sigma = tenue.image.clippedmean(flatsigma, sigma=5) / math.sqrt(len(datalist))
-        print("makeflatandmask: estimated noise in flat is %.4f." % sigma)
-
-        return flatdata
-
-    def makemaskhelper(flatdata):
-
-        maskdata = np.ones(flatdata.shape, dtype="float32")
-
-        print("makeflatandmask: masking nan values.")
-        maskdata[np.isnan(flatdata)] = 0
-
-        print("makeflatandmask: masking inf values.")
-        maskdata[np.isinf(flatdata)] = 0
-
-        print("makeflatandmask: masking globally low pixels.")
-        maskdata[np.where(flatdata < 0.80)] = 0
-
-        print("makeflatandmask: masking locally high or low pixels.")
-        low = tenue.image.medianfilter(flatdata, 7)
-        high = flatdata / low
-        maskdata[np.where(high < 0.97)] = 0
-        maskdata[np.where(high > 1.03)] = 0
-
-        print("makeflatandmask: masking pixels with at least two masked neighbors.")
-        # Grow the mask so that any pixel with at least 2 neigboring bad pixels is also bad.
-        grow = tenue.image.uniformfilter(maskdata, size=3)
-        maskdata[np.where(grow <= 7 / 9)] = 0
-
-        print(
-            "makeflatandmask: fraction of masked pixels is %.4f."
-            % (1 - np.nanmean(maskdata))
-        )
-
-        return maskdata
-
-    print("makeflatandmask: making %s flat and mask from %s." % (filter, fitspaths))
-
-    fitspathlist = tenue.path.getrawfitspaths(fitspaths, filter=filter)
-    if len(fitspathlist) == 0:
+    if len(datalist) == 0:
         print("ERROR: no flat files found.")
         return
 
-    print("makeflatandmask: making fake mask.")
-    usefakemask()
+    print("makeflatandmask: averaging %d flats with rejection." % (len(datalist)))
 
-    print("makeflatandmask: making flat with fake mask.")
-    flatdata = makeflathelper()
+    flatdata, flatsigma = tenue.image.clippedmeanandsigma(datalist, sigma=3, axis=0)
+
+    ############################################################################
 
     print("makeflatandmask: making real mask.")
+
+
+    maskdata = np.ones(flatdata.shape, dtype="float32")
+
+    print("makeflatandmask: masking nan values.")
+    maskdata[np.isnan(flatdata)] = 0
+
+    print("makeflatandmask: masking inf values.")
+    maskdata[np.isinf(flatdata)] = 0
+
+    print("makeflatandmask: masking globally low pixels.")
+    maskdata[np.where(flatdata < 0.80)] = 0
+
+    print("makeflatandmask: masking locally high or low pixels.")
+    low = tenue.image.medianfilter(flatdata, 7)
+    high = flatdata / low
+    maskdata[np.where(high < 0.97)] = 0
+    maskdata[np.where(high > 1.03)] = 0
+
+    print("makeflatandmask: masking pixels with at least two masked neighbors.")
+    # Grow the mask so that any pixel with at least 2 neigboring bad pixels is also bad.
+    grow = tenue.image.uniformfilter(maskdata, size=3)
+    maskdata[np.where(grow <= 7 / 9)] = 0
+
+    print(
+        "makeflatandmask: fraction of masked pixels is %.4f."
+        % (1 - np.nanmean(maskdata))
+    )
+
     global _maskdata
-    _maskdata = makemaskhelper(flatdata)
-
+    _maskdata = maskdata
     tenue.image.show(_maskdata, zrange=True)
-
     writemask(maskpath, filter=filter, name="makeflatandmask")
 
+    ############################################################################
+
     print("makeflatandmask: making flat with real mask.")
+    
+    maskeddatalist = []
+    for data in datalist:
+        data[np.where(_maskdata == 0)] = np.nan
+        data / np.nanmedian(data)
+        maskeddatalist.append(data)
+
+    print("makeflatandmask: averaging %d flats with rejection." % (len(maskeddatalist)))
+    flatdata, flatsigma = tenue.image.clippedmeanandsigma(maskeddatalist, sigma=3, axis=0)
+
+    mean, sigma = tenue.image.clippedmeanandsigma(flatdata, sigma=5)
+    print("makeflatandmask: flat is %.2f ± %.3f." % (mean, sigma))
+
+    sigma = tenue.image.clippedmean(flatsigma, sigma=5) / math.sqrt(len(maskeddatalist))
+    print("makeflatandmask: estimated noise in flat is %.4f." % sigma)
+
     global _flatdata
-    _flatdata = makeflathelper()
-
+    _flatdata = flatdata
     tenue.image.show(_flatdata, zrange=True)
-
     writeflat(flatpath, filter=filter, name="makeflatandmask")
+
+    ############################################################################
 
     print("makeflatandmask: finished.")
 
