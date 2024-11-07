@@ -69,7 +69,7 @@ def makeobject(
             "makeobject: reading %s sky file %s." % (filter, os.path.basename(fitspath))
         )
 
-        data = tenue.cook.cook(
+        header, data = tenue.cook.cook(
             fitspath,
             name="makeobject",
             dooverscan=True,
@@ -94,7 +94,7 @@ def makeobject(
             % (filter, os.path.basename(fitspath))
         )
 
-        data = tenue.cook.cook(
+        header, data = tenue.cook.cook(
             fitspath,
             name="makeobject",
             dooverscan=True,
@@ -184,7 +184,9 @@ def makeobject(
         return data
 
     print("makeobject: making %s object from %s." % (filter, fitspaths))
-
+    
+    print("making sky.")
+    
     fitspathlist = tenue.path.getrawfitspaths(fitspaths, filter=filter)
     if len(fitspathlist) == 0:
         print("ERROR: no object files found.")
