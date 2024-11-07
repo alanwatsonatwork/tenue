@@ -348,6 +348,15 @@ def makeobject(
     ############################################################################
 
     # Determine time properties of the stack.
+    
+    totalexposuretime = np.sum(
+        (tenue.instrument.exposuretime(header) for header in headerlist)
+    )
+    print(
+        "makeobject: total exposure time is %.0f seconds."
+        % totalexposuretime
+    )
+    
 
     starttimestamp = min(
         (tenue.instrument.starttimestamp(header) for header in headerlist)
