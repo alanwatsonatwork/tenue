@@ -119,6 +119,7 @@ def makeobject(
             dotrim=True,
             dobias=True,
             dodark=True,
+            doflat=True,
             dorotate=True,
         )
         headerlist.append(header)
