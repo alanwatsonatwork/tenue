@@ -104,10 +104,6 @@ def makeobject(
     )
 
     if len(fitspathlist) == 0:
-        print("ERROR: no dark files found.")
-        return
-
-    if len(fitspathlist) == 0:
         print("ERROR: no object files found.")
         return
 
