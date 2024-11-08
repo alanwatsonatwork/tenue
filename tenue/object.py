@@ -257,10 +257,11 @@ def makeobject(
             % (rejectfraction, meritlimit)
         )
 
+        x = [-np.inf] + sorted(meritlist)
+        y = np.arange(0, noriginal + 1) / noriginal
+        
         plt.figure()
-        n, bins = np.histogram(meritlist, bins=50)
-        f = np.cumsum(n) / np.sum(n)
-        plt.plot(bins[:-1], f, color="C0")
+        plt.step(x, y, where="post", color="C0")
         plt.ylim(0, 1)
         plt.xlim(left=0)
         plt.axvline(meritlimit, color="C1")
