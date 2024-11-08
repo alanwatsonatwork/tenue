@@ -95,7 +95,7 @@ def readproductdata(fitspath, name=None):
 
 
 def writeproduct(
-    fitspath, data, name=None, filter=None, starttimestamp=None, exposuretime=None
+    fitspath, data, name=None, filter=None, starttimestamp=None, endtimestamp=None, exposuretime=None
 ):
     if name is not None:
         print("%s: writing product file %s." % (name, os.path.basename(fitspath)))
@@ -107,6 +107,15 @@ def writeproduct(
             (
                 "DATE-OBS",
                 datetime.utcfromtimestamp(starttimestamp).isoformat(
+                    "T", "milliseconds"
+                ),
+            )
+        )
+    if endtimestamp is not None:
+        header.append(
+            (
+                "DATE-END",
+                datetime.utcfromtimestamp(endtimestamp).isoformat(
                     "T", "milliseconds"
                 ),
             )

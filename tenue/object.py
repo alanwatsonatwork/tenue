@@ -20,6 +20,7 @@ def writeobject(
     filter,
     path="{objectname}-{filter}.fits",
     starttimestamp=None,
+    endtimestamp=None,
     exposuretime=None,
     name="writeobject",
 ):
@@ -30,6 +31,7 @@ def writeobject(
         _objectdata,
         filter=filter,
         starttimestamp=starttimestamp,
+        endtimestamp=endtimestamp,
         exposuretime=exposuretime,
     )
     return
@@ -423,6 +425,7 @@ def makeobject(
         objectname,
         filter,
         starttimestamp=starttimestamp,
+        endtimestamp=endtimestamp,
         exposuretime=totalexposuretime,
         name="makeobject",
     )
