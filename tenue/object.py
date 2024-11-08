@@ -52,6 +52,8 @@ def writesky(
 
 def _makesky(headerlist, datalist, filter=filter, skyclip=None, objectname=None):
 
+    print("makeobject: making sky image.")
+
     newdatalist = []
     for data in datalist:
         newdata = np.copy(data)
@@ -61,7 +63,7 @@ def _makesky(headerlist, datalist, filter=filter, skyclip=None, objectname=None)
             newdata[np.where(newdata <= -skyclip)] = np.nan
         newdatalist.append(newdata)
 
-    print("makeobject: making sky image.")
+    print("makeobject: averaging %d sky files with rejection." % len(datalist))
     global _skydata
     _skydata, skysigma = tenue.image.clippedmeanandsigma(newdatalist, sigma=3, axis=0)
     sigma = tenue.image.clippedmean(skysigma, sigma=3) / math.sqrt(len(datalist))
@@ -106,6 +108,8 @@ def makeobject(
     if len(fitspathlist) == 0:
         print("ERROR: no object files found.")
         return
+
+    print("makeobject: reading %d images." % len(fitspathlist))
 
     headerlist = []
     datalist = []
@@ -259,7 +263,7 @@ def makeobject(
 
         x = [-np.inf] + sorted(meritlist)
         y = np.arange(0, noriginal + 1) / noriginal
-        
+
         plt.figure()
         plt.step(x, y, where="post", color="C0")
         plt.ylim(0, 1)
