@@ -284,8 +284,14 @@ def makeobject(
             for header, merit in zip(headerlist, meritlist)
             if merit >= meritlimit
         )
+        windowdatalist = list(
+            windowdata
+            for windowdata, merit in zip(windowdatalist, meritlist)
+            if merit >= meritlimit
+        )
         dxlist = list(dx for dx, merit in zip(dxlist, meritlist) if merit >= meritlimit)
         dylist = list(dy for dy, merit in zip(dylist, meritlist) if merit >= meritlimit)
+        meritlist = list(merit for merit in meritlist if merit >= meritlimit)
 
         nfinal = len(datalist)
         print("makeobject: accepted %d images out of %d." % (nfinal, noriginal))
@@ -302,7 +308,9 @@ def makeobject(
 
         for fitspath, merit, windowdata in zip(fitspathlist, meritlist, windowdatalist):
 
-            print("makeobject: %s: merit is %.1f." % (os.path.basename(fitspath), merit))
+            print(
+                "makeobject: %s: merit is %.1f." % (os.path.basename(fitspath), merit)
+            )
 
             if showwindow:
                 tenue.image.show(windowdata, contrast=0.05, small=True)
