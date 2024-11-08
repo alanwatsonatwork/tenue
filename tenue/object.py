@@ -268,6 +268,7 @@ def makeobject(
         plt.step(x, y, where="post", color="C0")
         plt.ylim(0, 1)
         plt.xlim(left=0)
+        plt.yticks(np.linspace(0, 1, 11))
         plt.axvline(meritlimit, color="C1")
         plt.axhline(rejectfraction, color="C1")
         plt.xlabel("Merit")
