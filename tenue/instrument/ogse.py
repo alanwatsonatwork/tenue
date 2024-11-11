@@ -33,7 +33,7 @@ def delta(header):
 
 
 def rotation(header):
-    return 0
+    return 90
     return 63.703
 
 
