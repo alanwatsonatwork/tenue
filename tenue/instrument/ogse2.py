@@ -4,19 +4,19 @@ import tenue.instrument
 
 
 def overscanyslice(header):
-    return slice(1, 20)
+    return slice(1, 10)
 
 
 def overscanxslice(header):
-    return slice(36, 4132)
+    return slice(18, 2066)
 
 
 def trimyslice(header):
-    return slice(22, 2059)
+    return slice(11, 2059)
 
 
 def trimxslice(header):
-    return slice(18, 4118)
+    return slice(18, 2066)
 
 
 def dorotate(header, data):
@@ -38,7 +38,7 @@ def rotation(header):
 
 
 def pixelscale(header):
-    return 0.20 / 3600
+    return 0.40 / 3600
 
 
 tenue.instrument.setvalues(
