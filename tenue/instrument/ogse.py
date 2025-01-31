@@ -34,8 +34,6 @@ def delta(header):
 
 def rotation(header):
     return 90
-    return 63.703
-
 
 def pixelscale(header):
     return 0.20 / 3600
