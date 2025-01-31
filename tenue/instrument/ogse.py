@@ -4,7 +4,7 @@ import tenue.instrument
 
 
 def overscanyslice(header):
-    return slice(1, 20)
+    return slice(2, 20)
 
 
 def overscanxslice(header):
@@ -12,11 +12,11 @@ def overscanxslice(header):
 
 
 def trimyslice(header):
-    return slice(22, 2059)
+    return slice(22, 4118)
 
 
 def trimxslice(header):
-    return slice(18, 4118)
+    return slice(18, 4132)
 
 
 def dorotate(header, data):
