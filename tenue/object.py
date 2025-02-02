@@ -175,7 +175,10 @@ def makeobject(
         ddelta = (delta - refdelta) / pixelscale
         dx = +int(np.round(dalpha * math.cos(rotation) - ddelta * math.sin(rotation)))
         dy = -int(np.round(dalpha * math.sin(rotation) + ddelta * math.cos(rotation)))
-        print("makeobject: %s: raw offset is dx = %+3d px dy = %+3d px." % (fitspath, dx, dy))
+        print(
+            "makeobject: %s: raw offset is dx = %+3d px dy = %+3d px."
+            % (fitspath, dx, dy)
+        )
 
         dxlist.append(dx)
         dylist.append(dy)
