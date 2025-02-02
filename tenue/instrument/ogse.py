@@ -4,19 +4,23 @@ import tenue.instrument
 
 
 def overscanyslice(header):
-    return slice(2, 20)
+    binning = int(header["SDTBN"])
+    return slice(int(2 / binning), int(20 / binning))
 
 
 def overscanxslice(header):
-    return slice(36, 4132)
+    binning = int(header["SDTBN"])
+    return slice(int(36 / binning), int(4132 / binning))
 
 
 def trimyslice(header):
-    return slice(22, 4118)
+    binning = int(header["SDTBN"])
+    return slice(int(22 / binning), int(4118 / binning))
 
 
 def trimxslice(header):
-    return slice(18, 4132)
+    binning = int(header["SDTBN"])
+    return slice(int(36 / binning), int(4132 / binning))
 
 
 def dorotate(header, data):
@@ -33,10 +37,16 @@ def delta(header):
 
 
 def rotation(header):
-    return 90
+    date = header["DATE-OBS"][:10]
+    if date < "2025-01-01":
+        return 90
+    else:
+        return 62
+
 
 def pixelscale(header):
-    return 0.20 / 3600
+    binning = int(header["SDTBN"])
+    return 0.20 * binning / 3600
 
 
 tenue.instrument.setvalues(
