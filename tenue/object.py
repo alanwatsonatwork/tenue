@@ -50,7 +50,7 @@ def writesky(
     return
 
 
-def _makesky(headerlist, datalist, filter=filter, skyclip=None, objectname=None):
+def _makesky(headerlist, datalist, filter=filter, skyclip=None, skystretch=None, objectname=None):
 
     print("makeobject: making sky image.")
 
@@ -75,7 +75,8 @@ def _makesky(headerlist, datalist, filter=filter, skyclip=None, objectname=None)
         % totalexposuretime
     )
     print("makeobject: estimated noise in sky image is %.2f DN." % sigma)
-    tenue.image.show(_skydata, zmin=-20, zmax=50)
+    if skystretch is not None:
+        tenue.image.show(_skydata / np.nanmedian(_skydata), zmin=1.0 - 0.5 * skystretch, zmax=1.0 + 0.5 * skystretch)
     writesky(objectname, filter, exposuretime=totalexposuretime, name="makeobject")
 
 
@@ -93,6 +94,7 @@ def makeobject(
     showwindow=True,
     doskyimage=False,
     skyclip=None,
+    skystretch=0.10,
     triggertime=None,
     rejectfraction=0.25,
 ):
@@ -152,7 +154,7 @@ def makeobject(
     ############################################################################
 
     if doskyimage:
-        _makesky(headerlist, datalist, filter, skyclip=skyclip, objectname=objectname)
+        _makesky(headerlist, datalist, filter, skyclip=skyclip, skystretch=skystretch, objectname=objectname)
 
     for data in datalist:
         data -= np.nanmedian(data)
