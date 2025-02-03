@@ -69,7 +69,7 @@ def show(
         data, interval=interval, stretch=stretch
     )
 
-    if (np.max(data.shape) > 1000):
+    if np.max(data.shape) > 1000:
         tickinterval = 100
     else:
         tickinterval = int(math.pow(2, int(math.log2(np.max(data.shape) / 16))))
@@ -78,7 +78,7 @@ def show(
     if small:
         plt.figure(figsize=(5, 5))
     else:
-        plt.figure(figsize=(10,10))
+        plt.figure(figsize=(10, 10))
     plt.imshow(data, origin="lower", norm=norm)
     plt.xticks(ticks, rotation=90)
     plt.yticks(ticks)
