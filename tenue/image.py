@@ -69,15 +69,18 @@ def show(
         data, interval=interval, stretch=stretch
     )
 
-    tickinterval = int(math.pow(2, int(math.log2(np.max(data.shape) / 8))))
+    if (np.max(data.shape) > 1000):
+        tickinterval = 100
+    else:
+        tickinterval = int(math.pow(2, int(math.log2(np.max(data.shape) / 16))))
     ticks = list(range(0, np.max(data.shape), tickinterval))
 
     if small:
         plt.figure(figsize=(5, 5))
     else:
-        plt.figure(figsize=(10, 10))
+        plt.figure(figsize=(10,10))
     plt.imshow(data, origin="lower", norm=norm)
-    plt.xticks(ticks)
+    plt.xticks(ticks, rotation=90)
     plt.yticks(ticks)
     plt.colorbar(fraction=0.046, pad=0.035)
     plt.show()
