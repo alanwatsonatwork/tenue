@@ -348,13 +348,14 @@ def makeobject(
 
         lastdata = datalist[0] * 0
         for data in datalist:
-            print(np.nanmax(lastdata))
             mask = np.where(lastdata >= residualimageclip)
             lastdata = np.copy(data)
-            p = np.size(np.where(np.isnan(data)))
             data[mask] = np.nan
-            q = np.size(np.where(np.isnan(data)))
-            print(np.size(mask) / np.size(data), p / np.size(data), q / np.size(data))
+        
+        datalist = datalist[1:]
+        headerlist = headerlist[1:]
+        dxlist = dxlist[1:]
+        dylist = dylist[1:]
 
     ############################################################################
 
