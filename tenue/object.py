@@ -237,10 +237,12 @@ def makeobject(
         newdylist = []
 
         for windowdata, dx, dy in zip(windowdatalist, dxlist, dylist):
-        
+
             filteredwindowdata = tenue.image.medianfilter(np.copy(windowdata), 3)
 
-            imax = np.unravel_index(np.argmax(windowdata, axis=None), filteredwindowdata.shape)
+            imax = np.unravel_index(
+                np.argmax(windowdata, axis=None), filteredwindowdata.shape
+            )
             ddy = imax[0] - nalignregion // 2
             ddx = imax[1] - nalignregion // 2
             dx += ddx
@@ -353,7 +355,7 @@ def makeobject(
             mask = np.where(lastdata >= residualimageclip)
             lastdata = np.copy(data)
             data[mask] = np.nan
-        
+
         datalist = datalist[1:]
         headerlist = headerlist[1:]
         dxlist = dxlist[1:]
