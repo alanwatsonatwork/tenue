@@ -50,7 +50,9 @@ def writesky(
     return
 
 
-def _makesky(headerlist, datalist, filter=filter, skyclip=None, skystretch=None, objectname=None):
+def _makesky(
+    headerlist, datalist, filter=filter, skyclip=None, skystretch=None, objectname=None
+):
 
     print("makeobject: making sky image.")
 
@@ -76,7 +78,11 @@ def _makesky(headerlist, datalist, filter=filter, skyclip=None, skystretch=None,
     )
     print("makeobject: estimated noise in sky image is %.2f DN." % sigma)
     if skystretch is not None:
-        tenue.image.show(_skydata / np.nanmedian(_skydata), zmin=1.0 - 0.5 * skystretch, zmax=1.0 + 0.5 * skystretch)
+        tenue.image.show(
+            _skydata / np.nanmedian(_skydata),
+            zmin=1.0 - 0.5 * skystretch,
+            zmax=1.0 + 0.5 * skystretch,
+        )
     writesky(objectname, filter, exposuretime=totalexposuretime, name="makeobject")
 
 
@@ -95,6 +101,7 @@ def makeobject(
     doskyimage=False,
     skyclip=None,
     skystretch=0.10,
+    residualimageclip=None,
     triggertime=None,
     rejectfraction=0.25,
 ):
@@ -135,7 +142,7 @@ def makeobject(
         print("makeobject: determining reference pointing.")
         alphalist = []
         deltalist = []
-        for header in headerlist:
+        for header, fitspath in zip(headerlist, fitspathlist):
             alpha = math.radians(tenue.instrument.alpha(header))
             delta = math.radians(tenue.instrument.delta(header))
             print(
@@ -154,7 +161,14 @@ def makeobject(
     ############################################################################
 
     if doskyimage:
-        _makesky(headerlist, datalist, filter, skyclip=skyclip, skystretch=skystretch, objectname=objectname)
+        _makesky(
+            headerlist,
+            datalist,
+            filter,
+            skyclip=skyclip,
+            skystretch=skystretch,
+            objectname=objectname,
+        )
 
     for data in datalist:
         data -= np.nanmedian(data)
@@ -326,6 +340,24 @@ def makeobject(
 
     ############################################################################
 
+    # Mask residual image
+
+    if residualimageclip is not None:
+
+        print("makeobject: masking residual image.")
+
+        lastdata = datalist[0] * 0
+        for data in datalist:
+            print(np.nanmax(lastdata))
+            mask = np.where(lastdata >= residualimageclip)
+            lastdata = np.copy(data)
+            p = np.size(np.where(np.isnan(data)))
+            data[mask] = np.nan
+            q = np.size(np.where(np.isnan(data)))
+            print(np.size(mask) / np.size(data), p / np.size(data), q / np.size(data))
+
+    ############################################################################
+
     # Produce the aligned data.
 
     aligneddatalist = []
@@ -348,6 +380,7 @@ def makeobject(
         aligneddata = aligneddata[ys : ys + nwindow, xs : xs + nwindow]
 
         aligneddata -= np.nanmedian(aligneddata, keepdims=True)
+        # tenue.image.show(aligneddata, zscale=True, contrast=0.5)
 
         aligneddatalist.append(aligneddata)
 
