@@ -1,4 +1,14 @@
-from tenue.cook import readbias, makebias, readdark, makedark, readflat, makeflat
+from tenue.cook import (
+    readbias,
+    makebias,
+    readdark,
+    makedark,
+    readflat,
+    makeflat,
+    usefakebias,
+    usefakedark,
+    usefakeflat,
+)
 from tenue.object import makeobject
 
 import sys
