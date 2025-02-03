@@ -193,7 +193,7 @@ def makeobject(
         dy = -int(np.round(dalpha * math.sin(rotation) + ddelta * math.cos(rotation)))
         print(
             "makeobject: %s: raw offset is dx = %+3d px dy = %+3d px."
-            % (fitspath, dx, dy)
+            % (os.path.basename(fitspath), dx, dy)
         )
 
         dxlist.append(dx)
@@ -237,8 +237,10 @@ def makeobject(
         newdylist = []
 
         for windowdata, dx, dy in zip(windowdatalist, dxlist, dylist):
+        
+            filteredwindowdata = tenue.image.medianfilter(np.copy(windowdata), 3)
 
-            imax = np.unravel_index(np.argmax(windowdata, axis=None), windowdata.shape)
+            imax = np.unravel_index(np.argmax(windowdata, axis=None), filteredwindowdata.shape)
             ddy = imax[0] - nalignregion // 2
             ddx = imax[1] - nalignregion // 2
             dx += ddx
