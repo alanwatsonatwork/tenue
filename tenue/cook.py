@@ -139,19 +139,19 @@ def cook(
 
 def usefakebias():
     global _biasdata
-    _biasdata = np.zeros((2051, 1024))
+    _biasdata = np.zeros((4096, 4096))
     return _biasdata
 
 
 def usefakedark():
     global _darkdata
-    _darkdata = np.zeros((2051, 1024))
+    _darkdata = np.zeros((4096, 4096))
     return _darkdata
 
 
 def usefakeflat():
     global _flatdata
-    _flatdata = np.ones((2051, 1024))
+    _flatdata = np.ones((4096, 4096))
     return _flatdata
 
 
