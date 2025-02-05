@@ -102,6 +102,7 @@ def writeproduct(
     starttimestamp=None,
     endtimestamp=None,
     exposuretime=None,
+    gain=None,
 ):
     if name is not None:
         print("%s: writing product file %s." % (name, os.path.basename(fitspath)))
@@ -126,5 +127,7 @@ def writeproduct(
         )
     if exposuretime is not None:
         header.append(("EXPTIME", exposuretime))
+    if gain is not None:
+        header.append(("GAIN", gain))
     astropy.io.fits.writeto(fitspath, data, header, overwrite=True)
     return

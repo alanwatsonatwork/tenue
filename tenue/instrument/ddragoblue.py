@@ -46,6 +46,10 @@ def pixelscale(header):
     return 0.38 * binning / 3600
 
 
+def gain(header):
+    return 2.23
+
+
 tenue.instrument.setvalues(
     overscanxslice=overscanxslice,
     overscanyslice=overscanyslice,
@@ -56,4 +60,5 @@ tenue.instrument.setvalues(
     alpha=alpha,
     delta=delta,
     pixelscale=pixelscale,
+    gain=gain,
 )

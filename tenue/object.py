@@ -22,6 +22,7 @@ def writeobject(
     starttimestamp=None,
     endtimestamp=None,
     exposuretime=None,
+    gain=None,
     name="writeobject",
 ):
     path = path.format(objectname=objectname, filter=filter)
@@ -33,6 +34,7 @@ def writeobject(
         starttimestamp=starttimestamp,
         endtimestamp=endtimestamp,
         exposuretime=exposuretime,
+        gain=gain,
     )
     return
 
@@ -422,6 +424,9 @@ def makeobject(
     )
     print("makeobject: total exposure time is %.0f seconds." % totalexposuretime)
 
+    gain = tenue.instrument.gain(headerlist[0]) / math.sqrt(len(aligneddatalist))
+    print("makeobject: effective gain is %.3f e/DN." % gain)
+
     starttimestamp = min(
         (tenue.instrument.starttimestamp(header) for header in headerlist)
     )
@@ -472,6 +477,7 @@ def makeobject(
         starttimestamp=starttimestamp,
         endtimestamp=endtimestamp,
         exposuretime=totalexposuretime,
+        gain=gain,
         name="makeobject",
     )
 

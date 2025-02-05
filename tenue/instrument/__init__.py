@@ -45,6 +45,10 @@ def defaultpixelscale(header):
     return header["CDELT2"]
 
 
+def defaultgain(header):
+    return header["GAIN"]
+
+
 def setvalues(
     datamax=defaultdatamax,
     flatmax=defaultflatmax,
@@ -61,6 +65,7 @@ def setvalues(
     alpha=defaultalpha,
     delta=defaultdelta,
     pixelscale=defaultpixelscale,
+    gain=defaultgain,
 ):
 
     global _datamax
@@ -107,6 +112,9 @@ def setvalues(
 
     global _pixelscale
     _pixelscale = pixelscale
+
+    global _gain
+    _gain = gain
 
 
 def datamax(header):
@@ -167,3 +175,7 @@ def delta(header):
 
 def pixelscale(header):
     return _pixelscale(header)
+
+
+def gain(header):
+    return _gain(header)
