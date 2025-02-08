@@ -424,8 +424,8 @@ def makeobject(
     )
     print("makeobject: total exposure time is %.0f seconds." % totalexposuretime)
 
-    gain = tenue.instrument.gain(headerlist[0]) / math.sqrt(len(aligneddatalist))
-    print("makeobject: effective gain is %.3f e/DN." % gain)
+    gain = tenue.instrument.gain(headerlist[0]) * math.sqrt(len(aligneddatalist))
+    print("makeobject: effective gain is %.2f e/DN." % gain)
 
     starttimestamp = min(
         (tenue.instrument.starttimestamp(header) for header in headerlist)
