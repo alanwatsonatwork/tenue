@@ -133,7 +133,7 @@ def makeobject(
             dobias=True,
             dodark=True,
             doflat=True,
-            dorotate=True,
+            dorotate=False,
         )
         headerlist.append(header)
         datalist.append(data)
@@ -172,10 +172,14 @@ def makeobject(
             objectname=objectname,
         )
 
-    for data in datalist:
+    rotateddatalist = []
+    for header, data in zip(headerlist, datalist):
         data -= np.nanmedian(data)
         if doskyimage:
             data -= _skydata
+        rotateddata = tenue.instrument.dorotate(header, data)
+        rotateddatalist.append(rotateddata)
+    datalist = rotateddatalist
 
     ############################################################################
 
