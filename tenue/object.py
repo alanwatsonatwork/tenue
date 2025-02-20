@@ -195,8 +195,15 @@ def makeobject(
 
         dalpha = (alpha - refalpha) / pixelscale * math.cos(refdelta)
         ddelta = (delta - refdelta) / pixelscale
-        dx = +int(np.round(dalpha * math.cos(rotation) - ddelta * math.sin(rotation)))
-        dy = -int(np.round(dalpha * math.sin(rotation) + ddelta * math.cos(rotation)))
+        dx = +np.round(dalpha * math.cos(rotation) - ddelta * math.sin(rotation))
+        dy = -np.round(dalpha * math.sin(rotation) + ddelta * math.cos(rotation))
+
+        dx += tenue.instrument.boresightdx(header)
+        dy += tenue.instrument.boresightdy(header)
+
+        dx = int(dx + 0.5)
+        dy = int(dy + 0.5)
+
         print(
             "makeobject: %s: raw offset is dx = %+3d px dy = %+3d px."
             % (os.path.basename(fitspath), dx, dy)
@@ -391,7 +398,6 @@ def makeobject(
         aligneddata = aligneddata[ys : ys + nwindow, xs : xs + nwindow]
 
         aligneddata -= np.nanmedian(aligneddata, keepdims=True)
-        # tenue.image.show(aligneddata, zscale=True, contrast=0.5)
 
         aligneddatalist.append(aligneddata)
 
@@ -409,13 +415,16 @@ def makeobject(
             "makeobject: averaging %d object files with rejection."
             % len(aligneddatalist)
         )
-        _objectdata, objectsigma = tenue.image.clippedmeanandsigma(
-            aligneddatalist, sigma=10, axis=0
-        )
-        sigma = tenue.image.clippedmean(objectsigma, sigma=3) / math.sqrt(
-            len(aligneddatalist)
-        )
-        print("makeobject: estimated noise in object image is %.2f DN." % sigma)
+        if True:
+            _objectdata, objectsigma = tenue.image.clippedmeanandsigma(
+                aligneddatalist, sigma=10, axis=0
+            )
+            sigma = tenue.image.clippedmean(objectsigma, sigma=3) / math.sqrt(
+                len(aligneddatalist)
+            )
+            print("makeobject: estimated noise in object image is %.2f DN." % sigma)
+        else:
+            _objectdata = np.nanmean(aligneddatalist, axis=0)
 
     tenue.image.show(_objectdata, zscale=True, contrast=0.1)
 

@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 import tenue.instrument
 import tenue.image
@@ -85,6 +86,20 @@ def pixelscale(header):
     return 0.38 * binning / 3600
 
 
+_boresightdx = -190
+_boresightdy = 0
+
+
+def boresightdx(header):
+    theta = math.radians(int(header["EMTMRO"]))
+    return _boresightdx * math.cos(theta) - _boresightdy * math.sin(theta)
+
+
+def boresightdy(header):
+    theta = math.radians(int(header["EMTMRO"]))
+    return _boresightdx * math.sin(theta) + _boresightdy * math.cos(theta)
+
+
 def gain(header):
     return 2.23
 
@@ -98,5 +113,7 @@ tenue.instrument.setvalues(
     alpha=alpha,
     delta=delta,
     pixelscale=pixelscale,
+    boresightdx=boresightdx,
+    boresightdy=boresightdy,
     gain=gain,
 )

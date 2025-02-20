@@ -60,6 +60,14 @@ def defaultpixelscale(header):
     return header["CDELT2"]
 
 
+def defaultboresightdx(header):
+    return 0
+
+
+def defaultboresightdy(header):
+    return 0
+
+
 def defaultgain(header):
     return header["GAIN"]
 
@@ -81,6 +89,8 @@ def setvalues(
     alpha=defaultalpha,
     delta=defaultdelta,
     pixelscale=defaultpixelscale,
+    boresightdx=defaultboresightdx,
+    boresightdy=defaultboresightdy,
     gain=defaultgain,
 ):
 
@@ -131,6 +141,12 @@ def setvalues(
 
     global _pixelscale
     _pixelscale = pixelscale
+
+    global _boresightdx
+    _boresightdx = boresightdx
+
+    global _boresightdy
+    _boresightdy = boresightdy
 
     global _gain
     _gain = gain
@@ -198,6 +214,14 @@ def delta(header):
 
 def pixelscale(header):
     return _pixelscale(header)
+
+
+def boresightdx(header):
+    return _boresightdx(header)
+
+
+def boresightdy(header):
+    return _boresightdy(header)
 
 
 def gain(header):
