@@ -85,16 +85,7 @@ def cook(
     data[np.where(data == tenue.instrument.datamax(header))] = np.nan
 
     if dooverscan:
-        overscandata = data[
-            tenue.instrument.overscanyslice(header),
-            tenue.instrument.overscanxslice(header),
-        ]
-        mean = tenue.image.clippedmean(overscandata, sigma=3)
-        mean = tenue.image.clippedmean(overscandata, sigma=3)
-        mean = tenue.image.clippedmean(overscandata, sigma=3)
-        sigma = tenue.image.clippedsigma(overscandata, sigma=3)
-        print("%s: removing overscan level of %.2f ± %.2f DN." % (name, mean, sigma))
-        data -= mean
+        tenue.instrument.dooverscan(name, header, data)
 
     if dotrim:
         print("%s: trimming." % (name))

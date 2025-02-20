@@ -1,5 +1,22 @@
 from datetime import datetime
 
+import tenue.image
+
+
+def defaultdooverscan(name, header, data):
+    overscandata = data[
+        overscanyslice(header),
+        overscanxslice(header),
+    ]
+    mean = tenue.image.clippedmean(overscandata, sigma=3)
+    mean = tenue.image.clippedmean(overscandata, sigma=3)
+    mean = tenue.image.clippedmean(overscandata, sigma=3)
+    sigma = tenue.image.clippedsigma(overscandata, sigma=3)
+    print(
+        "%s: removing overscan level of %.2f ± %.2f DN." % (name, mean, sigma)
+    )
+    data -= mean
+
 
 def defaultdatamax(header):
     return 65535
@@ -37,7 +54,7 @@ def defaultalpha(header):
     return header["CRVAL1"]
 
 
-def defaultdelta(heafer):
+def defaultdelta(header):
     return header["CRVAL2"]
 
 
@@ -50,6 +67,7 @@ def defaultgain(header):
 
 
 def setvalues(
+    dooverscan=defaultdooverscan,
     datamax=defaultdatamax,
     flatmax=defaultflatmax,
     overscanyslice=None,
@@ -67,6 +85,9 @@ def setvalues(
     pixelscale=defaultpixelscale,
     gain=defaultgain,
 ):
+
+    global _dooverscan
+    _dooverscan = dooverscan
 
     global _datamax
     _datamax = datamax
@@ -115,6 +136,10 @@ def setvalues(
 
     global _gain
     _gain = gain
+
+
+def dooverscan(name, header, data):
+    return _dooverscan(name, header, data)
 
 
 def datamax(header):
