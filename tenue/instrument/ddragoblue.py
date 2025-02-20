@@ -1,16 +1,55 @@
 import numpy as np
 
 import tenue.instrument
+import tenue.image
 
 
-def overscanyslice(header):
+def dooverscan(name, header, data):
+    # Currently only works for the 4kx4k window with binning 1.
     binning = int(header["SDTBN"])
-    return slice(int(0 / binning), int(4096 / binning))
-
-
-def overscanxslice(header):
-    binning = int(header["SDTBN"])
-    return slice(int(0 / binning), int(48 / binning))
+    if data.shape[0] == (4096 // binning) and data.shape[1] == (4192 // binning):
+        p0 = tenue.image.clippedmean(
+            data[(0 // binning) : (2048 // binning), (0 // binning) : (48 // binning)],
+            sigma=3,
+        )
+        p1 = tenue.image.clippedmean(
+            data[
+                (0 // binning) : (2048 // binning),
+                (4144 // binning) : (4192 // binning),
+            ],
+            sigma=3,
+        )
+        p2 = tenue.image.clippedmean(
+            data[
+                (2048 // binning) : (4096 // binning), (0 // binning) : (48 // binning)
+            ],
+            sigma=3,
+        )
+        p3 = tenue.image.clippedmean(
+            data[
+                (2048 // binning) : (4096 // binning),
+                (4144 // binning) : (4192 // binning),
+            ],
+            sigma=3,
+        )
+        print(
+            "%s: removing overscan levels of %.2f, %.2f, %.2f, and %.2f DN."
+            % (name, p0, p1, p2, p3)
+        )
+        data[
+            (0 // binning) : (2048 // binning), (0 // binning) : (2096 // binning)
+        ] -= p0
+        data[
+            (0 // binning) : (2048 // binning), (2096 // binning) : (4192 // binning)
+        ] -= p1
+        data[
+            (2048 // binning) : (4096 // binning), (0 // binning) : (2096 // binning)
+        ] -= p2
+        data[
+            (2048 // binning) : (4096 // binning), (2096 // binning) : (4192 // binning)
+        ] -= p3
+    else:
+        print("%s: skipping removing overscan levels from windowed data." % name)
 
 
 def trimyslice(header):
@@ -51,8 +90,7 @@ def gain(header):
 
 
 tenue.instrument.setvalues(
-    overscanxslice=overscanxslice,
-    overscanyslice=overscanyslice,
+    dooverscan=dooverscan,
     trimxslice=trimxslice,
     trimyslice=trimyslice,
     dorotate=dorotate,

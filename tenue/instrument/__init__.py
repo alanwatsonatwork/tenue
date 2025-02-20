@@ -12,9 +12,7 @@ def defaultdooverscan(name, header, data):
     mean = tenue.image.clippedmean(overscandata, sigma=3)
     mean = tenue.image.clippedmean(overscandata, sigma=3)
     sigma = tenue.image.clippedsigma(overscandata, sigma=3)
-    print(
-        "%s: removing overscan level of %.2f ± %.2f DN." % (name, mean, sigma)
-    )
+    print("%s: removing overscan level of %.2f ± %.2f DN." % (name, mean, sigma))
     data -= mean
 
 
