@@ -255,13 +255,15 @@ def makeflat(fitspaths, filter, flatpath="flat-{filter}.fits", fitspathsslice=No
             dobias=True,
             dodark=True,
         )
-        if np.isnan(data).all():
-            print("makedark: rejected %s: no valid data." % os.path.basename(fitspath))
+        centeryslice = slice(int(data.shape[0] * 1 / 4), int(data.shape[0] * 3 / 4))
+        centerxslice = slice(int(data.shape[1] * 1 / 4), int(data.shape[1] * 3 / 4))
+        if np.isnan(data[centeryslice, centerxslice]).all():
+            print("makedark: rejected %s: no valid data in center." % os.path.basename(fitspath))
             continue
-        median = np.nanmedian(data)
-        print("makeflat: median is %.2f DN." % median)
+        median = np.nanmedian(data[centeryslice, centerxslice])
+        print("makeflat: median in center is %.2f DN." % median)
         if median > tenue.instrument.flatmax(header):
-            print("makeflat: rejecting image: median too high.")
+            print("makeflat: rejecting image: median in center is too high.")
             continue
         print("makeflat: accepted %s." % os.path.basename(fitspath))
         data /= median
