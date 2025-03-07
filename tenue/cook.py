@@ -255,13 +255,15 @@ def makeflat(fitspaths, filter, flatpath="flat-{filter}.fits", fitspathsslice=No
             dobias=True,
             dodark=True,
         )
-        if np.isnan(data).all():
-            print("makedark: rejected %s: no valid data." % os.path.basename(fitspath))
+        centeryslice = slice(int(data.shape[0] * 1 / 4), int(data.shape[0] * 3 / 4))
+        centerxslice = slice(int(data.shape[1] * 1 / 4), int(data.shape[1] * 3 / 4))
+        if np.isnan(data[centeryslice, centerxslice]).all():
+            print("makedark: rejected %s: no valid data in center." % os.path.basename(fitspath))
             continue
-        median = np.nanmedian(data)
-        print("makeflat: median is %.2f DN." % median)
+        median = np.nanmedian(data[centeryslice, centerxslice])
+        print("makeflat: median in center is %.2f DN." % median)
         if median > tenue.instrument.flatmax(header):
-            print("makeflat: rejecting image: median too high.")
+            print("makeflat: rejecting image: median in center is too high.")
             continue
         print("makeflat: accepted %s." % os.path.basename(fitspath))
         data /= median
@@ -290,15 +292,21 @@ def makeflat(fitspaths, filter, flatpath="flat-{filter}.fits", fitspathsslice=No
     print("makeflat: masking locally high or low pixels.")
     low = tenue.image.medianfilter(flatdata, 7)
     high = flatdata / low
-    maskdata[np.where(high < 0.97)] = 0
-    maskdata[np.where(high > 1.03)] = 0
+    maskdata[np.where(high < 0.9)] = 0
+    maskdata[np.where(high > 1.1)] = 0
 
     print("makeflat: masking pixels with at least two masked neighbors.")
     # Grow the mask so that any pixel with at least 2 neigboring bad pixels is also bad.
     grow = tenue.image.uniformfilter(maskdata, size=3)
     maskdata[np.where(grow <= 7 / 9)] = 0
 
-    print("makeflat: fraction of masked pixels is %.4f." % (1 - np.nanmean(maskdata)))
+    print("makeflat: fraction of masked pixels is %.5f." % (1 - np.nanmean(maskdata)))
+    centeryslice = slice(int(maskdata.shape[0] * 1 / 4), int(maskdata.shape[0] * 3 / 4))
+    centerxslice = slice(int(maskdata.shape[1] * 1 / 4), int(maskdata.shape[1] * 3 / 4))
+    print(
+        "makeflat: fraction of masked pixels in center is %.5f."
+        % (1 - np.nanmean(maskdata[centeryslice, centerxslice]))
+    )
 
     tenue.image.show(maskdata, zrange=True)
 
