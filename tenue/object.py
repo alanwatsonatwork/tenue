@@ -455,7 +455,7 @@ def makeobject(
     )
 
     if triggertime is not None:
-        triggertimestamp = datetime.fromisoformat(triggertime + "Z").timestamp()
+        triggertimestamp = datetime.fromisoformat(triggertime + "+00:00").timestamp()
         print(
             "makeobject: observations are from %.0f to %.0f seconds after the trigger"
             % ((starttimestamp - triggertimestamp), (endtimestamp - triggertimestamp))

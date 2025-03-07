@@ -37,7 +37,7 @@ def defaultexposuretime(header):
 
 
 def defaultstarttimestamp(header):
-    return datetime.fromisoformat(header["DATE-OBS"] + "Z").timestamp()
+    return datetime.fromisoformat(header["DATE-OBS"] + "+00:00").timestamp()
 
 
 def defaultendtimestamp(header):
