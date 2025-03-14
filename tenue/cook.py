@@ -122,7 +122,7 @@ def cook(
     
         print("%s: windowing to %d by %d (with margin of %d)." % (name, nwindow, nwindow, nmargin))
 
-        n = nwindow + 2 * nwindowmargin
+        n = nwindow + 2 * nmargin
         datashape = np.array(data.shape)
         yc = int(data.shape[0] / 2)
         xc = int(data.shape[1] / 2)
