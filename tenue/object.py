@@ -99,6 +99,7 @@ def makeobject(
     refdelta=None,
     sigma=None,
     nwindow=None,
+    nmargin=256,
     showwindow=True,
     doskyimage=False,
     skyclip=None,
@@ -134,6 +135,8 @@ def makeobject(
             dodark=True,
             doflat=True,
             dorotate=False,
+            nwindow=nwindow,
+            nmargin=nmargin,
         )
         headerlist.append(header)
         datalist.append(data)
@@ -214,8 +217,6 @@ def makeobject(
 
     ############################################################################
 
-    margin = 512
-
     # Extract the window data.
 
     windowdatalist = []
@@ -224,11 +225,11 @@ def makeobject(
 
         for data, dx, dy in zip(datalist, dxlist, dylist):
 
-            aligny = align[0] - margin
-            alignx = align[1] - margin
+            aligny = align[0] - nmargin
+            alignx = align[1] - nmargin
             if nwindow is not None:
-                aligny += margin + (data.shape[0] - nwindow) // 2
-                alignx += margin + (data.shape[1] - nwindow) // 2
+                aligny += nmargin + (data.shape[0] - nwindow) // 2
+                alignx += nmargin + (data.shape[1] - nwindow) // 2
             alignxlo = alignx + dx - nalignregion // 2
             alignxhi = alignx + dx + nalignregion // 2
             alignylo = aligny + dy - nalignregion // 2
@@ -384,10 +385,10 @@ def makeobject(
 
         datashape = np.array(data.shape)
 
-        aligneddata = np.full(datashape + 2 * margin, np.nan, dtype="float32")
-        xlo = margin - dx
+        aligneddata = np.full(datashape + 2 * nmargin, np.nan, dtype="float32")
+        xlo = nmargin - dx
         xhi = xlo + datashape[1]
-        ylo = margin - dy
+        ylo = nmargin - dy
         yhi = ylo + datashape[0]
         aligneddata[ylo:yhi, xlo:xhi] = data
 

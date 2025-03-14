@@ -76,6 +76,8 @@ def cook(
     dosky=False,
     dowindow=False,
     dorotate=False,
+    nwindow=None,
+    nmargin=0
 ):
 
     print("%s: reading %s." % (name, os.path.basename(fitspath)))
@@ -116,14 +118,17 @@ def cook(
         print("%s: rotating to standard orientation." % (name))
         data = tenue.instrument.dorotate(header, data)
 
-    if dowindow:
-        print("%s: windowing." % (name))
-        cx = 1996 / 2 + 30
-        cy = 2028 / 2 - 0
-        n = 512 * 3
-        sx = int(cx - n / 2)
-        sy = int(cy - n / 2)
-        data = data[sy : sy + n, sx : sx + n]
+    if nwindow is not None:
+    
+        print("%s: windowing to %d by %d (with margin of %d)." % (name, nwindow, nwindow, nmargin))
+
+        n = nwindow + 2 * nwindowmargin
+        datashape = np.array(data.shape)
+        yc = int(data.shape[0] / 2)
+        xc = int(data.shape[1] / 2)
+        ys = int(yc - n / 2)
+        xs = int(xc - n / 2)
+        data = data[ys : ys + n, xs : xs + n].copy()
 
     return header, data
 
