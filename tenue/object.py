@@ -390,6 +390,8 @@ def makeobject(
         xhi = xlo + datashape[1]
         ylo = nmargin - dy
         yhi = ylo + datashape[0]
+        if ylo < 0 or xlo < 0 or yhi > data.shape[1] or xhi > data.shape[2]:
+            raise RuntimeError("The value of the nmargin parameter needs to be increased.")
         aligneddata[ylo:yhi, xlo:xhi] = data
 
         yc = int(aligneddata.shape[0] / 2)
