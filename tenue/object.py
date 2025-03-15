@@ -58,18 +58,21 @@ def _makesky(
 
     print("makeobject: making sky image.")
 
-    newdatalist = []
-    for data in datalist:
-        newdata = np.copy(data)
+    nz = len(datalist)
+    ny = datalist[0].shape[0]
+    nx = datalist[0].shape[1]
+    newdatastack = np.full([nz, ny, nx], np.nan, dtype="float32")
+    for iz in range(nz - 1):
+        newdata = datalist[iz].copy()
         newdata -= np.nanmedian(newdata)
         if skyclip is not None:
             newdata[np.where(newdata >= +skyclip)] = np.nan
             newdata[np.where(newdata <= -skyclip)] = np.nan
-        newdatalist.append(newdata)
+        newdatastack[iz, :, :] = newdata
 
     print("makeobject: averaging %d sky files with rejection." % len(datalist))
     global _skydata
-    _skydata, skysigma = tenue.image.clippedmeanandsigma(newdatalist, sigma=3, axis=0)
+    _skydata, skysigma = tenue.image.clippedmeanandsigma(newdatastack, sigma=3, axis=0)
     sigma = tenue.image.clippedmean(skysigma, sigma=3) / math.sqrt(len(datalist))
     totalexposuretime = np.sum(
         (tenue.instrument.exposuretime(header) for header in headerlist)
@@ -182,6 +185,7 @@ def makeobject(
             data -= _skydata
         rotateddata = tenue.instrument.dorotate(header, data)
         rotateddatalist.append(rotateddata)
+    del datalist
     datalist = rotateddatalist
 
     ############################################################################
@@ -272,12 +276,9 @@ def makeobject(
     ############################################################################
 
     minnmargin = max(np.max(np.abs(np.array(dxlist))), np.max(np.abs(np.array(dylist))))
-    print(
-        "makeobject: nmargin must be at least %d." % minnmargin
-    )
+    print("makeobject: nmargin must be at least %d." % minnmargin)
     if nmargin < minnmargin:
         raise RuntimeError("The value of the nmargin parameter needs to be increased.")
-
 
     ############################################################################
 
@@ -388,7 +389,7 @@ def makeobject(
     ############################################################################
 
     # Produce the aligned data.
-    
+
     aligneddatalist = []
 
     for data, dx, dy in zip(datalist, dxlist, dylist):

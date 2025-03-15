@@ -10,39 +10,74 @@ import scipy.ndimage
 
 import matplotlib.pyplot as plt
 
+def sigma_clipped_stats(stack, sigma=3.0, axis=None):
+
+    if not isinstance(stack, np.ndarray):
+        stack = np.array(stack)
+
+    with warnings.catch_warnings():
+
+        warnings.simplefilter("ignore", Warning)
+
+        if axis == 0 and len(stack.shape) == 3:
+
+            nz = stack.shape[0]
+            ny = stack.shape[1]
+            nx = stack.shape[2]
+
+            meanimage = np.full([ny, nx], np.nan, dtype="float32")
+            medianimage = np.full([ny, nx], np.nan, dtype="float32")
+            sigmaimage = np.full([ny, nx], np.nan, dtype="float32")
+
+            for iy in range(ny):
+                meanrow, medianrow, sigmarow = astropy.stats.sigma_clipped_stats(
+                        stack[:, iy, :],
+                        sigma=sigma,
+                        axis=0,
+                        cenfunc="median",
+                        stdfunc="mad_std",
+                    )
+                
+                meanimage[iy, :] = meanrow
+                medianimage[iy, :] = medianrow
+                sigmaimage[iy, :] = sigmarow
+                                
+            mean = meanimage
+            median = medianimage
+            sigma = sigmaimage
+
+        else:
+
+            mean, median, sigma = astropy.stats.sigma_clipped_stats(
+                stack, sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
+            )
+
+    if isinstance(mean, np.ndarray):
+        mean = mean.astype("float32")
+    if isinstance(median, np.ndarray):
+        median = median.astype("float32")
+    if isinstance(sigma, np.ndarray):
+        sigma = sigma.astype("float32")
+
+    return mean, median, sigma
+
 
 def clippedmean(stack, sigma=3.0, axis=None):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", Warning)
-        mean, median, sigma = astropy.stats.sigma_clipped_stats(
-            np.array(stack), sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
-        )
-    if isinstance(mean, np.ndarray):
-        mean = mean.astype("float32")
+        mean, median, sigma = sigma_clipped_stats(stack, sigma=sigma, axis=axis)
     return mean
 
 
 def clippedsigma(stack, sigma=3.0, axis=None):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", Warning)
-        mean, median, sigma = astropy.stats.sigma_clipped_stats(
-            np.array(stack), sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
-        )
-    if isinstance(sigma, np.ndarray):
-        sigma = sigma.astype("float32")
+        mean, median, sigma = sigma_clipped_stats(stack, sigma=sigma, axis=axis)
     return sigma
 
 
 def clippedmeanandsigma(stack, sigma=3.0, axis=None):
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", Warning)
-        mean, median, sigma = astropy.stats.sigma_clipped_stats(
-            np.array(stack), sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
-        )
-    if isinstance(mean, np.ndarray):
-        mean = mean.astype("float32")
-    if isinstance(sigma, np.ndarray):
-        sigma = sigma.astype("float32")
+    mean, median, sigma = sigma_clipped_stats(stack, sigma=sigma, axis=axis)
     return mean, sigma
 
 

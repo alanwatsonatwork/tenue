@@ -77,7 +77,7 @@ def cook(
     dowindow=False,
     dorotate=False,
     nwindow=None,
-    nmargin=0
+    nmargin=0,
 ):
 
     print("%s: reading %s." % (name, os.path.basename(fitspath)))
@@ -119,8 +119,11 @@ def cook(
         data = tenue.instrument.dorotate(header, data)
 
     if nwindow is not None:
-    
-        print("%s: windowing to %d by %d (with margin of %d)." % (name, nwindow, nwindow, nmargin))
+
+        print(
+            "%s: windowing to %d by %d (with margin of %d)."
+            % (name, nwindow, nwindow, nmargin)
+        )
 
         n = nwindow + 2 * nmargin
         datashape = np.array(data.shape)
@@ -263,7 +266,10 @@ def makeflat(fitspaths, filter, flatpath="flat-{filter}.fits", fitspathsslice=No
         centeryslice = slice(int(data.shape[0] * 1 / 4), int(data.shape[0] * 3 / 4))
         centerxslice = slice(int(data.shape[1] * 1 / 4), int(data.shape[1] * 3 / 4))
         if np.isnan(data[centeryslice, centerxslice]).all():
-            print("makedark: rejected %s: no valid data in center." % os.path.basename(fitspath))
+            print(
+                "makedark: rejected %s: no valid data in center."
+                % os.path.basename(fitspath)
+            )
             continue
         median = np.nanmedian(data[centeryslice, centerxslice])
         print("makeflat: median in center is %.2f DN." % median)
