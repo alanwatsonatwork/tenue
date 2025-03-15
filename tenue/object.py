@@ -271,6 +271,16 @@ def makeobject(
 
     ############################################################################
 
+    minnmargin = max(np.max(np.abs(np.array(dxlist))), np.max(np.abs(np.array(dylist))))
+    print(
+        "makeobject: nmargin must be at least %d." % minnmargin
+    )
+    if nmargin < minnmargin:
+        raise RuntimeError("The value of the nmargin parameter needs to be increased.")
+
+
+    ############################################################################
+
     # Determine the merit.
 
     meritlist = []
@@ -378,27 +388,16 @@ def makeobject(
     ############################################################################
 
     # Produce the aligned data.
-
+    
     aligneddatalist = []
 
     for data, dx, dy in zip(datalist, dxlist, dylist):
 
-        datashape = np.array(data.shape)
-
-        aligneddata = np.full(datashape + 2 * nmargin, np.nan, dtype="float32")
-        xlo = nmargin - dx
-        xhi = xlo + datashape[1]
-        ylo = nmargin - dy
-        yhi = ylo + datashape[0]
-        if ylo < 0 or xlo < 0 or yhi > data.shape[1] or xhi > data.shape[2]:
-            raise RuntimeError("The value of the nmargin parameter needs to be increased.")
-        aligneddata[ylo:yhi, xlo:xhi] = data
-
-        yc = int(aligneddata.shape[0] / 2)
-        xc = int(aligneddata.shape[1] / 2)
-        ys = int(yc - nwindow / 2)
-        xs = int(xc - nwindow / 2)
-        aligneddata = aligneddata[ys : ys + nwindow, xs : xs + nwindow]
+        xlo = nmargin + dx
+        xhi = xlo + nwindow
+        ylo = nmargin + dy
+        yhi = ylo + nwindow
+        aligneddata = data[ylo:yhi, xlo:xhi]
 
         aligneddata -= np.nanmedian(aligneddata, keepdims=True)
 
