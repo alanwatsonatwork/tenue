@@ -64,7 +64,10 @@ def trimxslice(header):
 
 
 def dorotate(header, data):
-    rotation = header["SMTMRO"]
+    if header["DTDS"] == "SI 1110-167":
+        rotation = -header["SMTMRO"]
+    elif header["DTDS"] == "SI 1110-185":
+        rotation = -header["SMTMRO"] - 90    
     return np.rot90(data, -int(rotation / 90))
 
 
