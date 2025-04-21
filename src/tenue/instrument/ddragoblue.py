@@ -67,7 +67,7 @@ def dorotate(header, data):
     if header["DTDS"] == "SI 1110-167":
         rotation = -header["SMTMRO"]
     elif header["DTDS"] == "SI 1110-185":
-        rotation = -header["SMTMRO"] - 90    
+        rotation = header["SMTMRO"] + 90   
     return np.rot90(data, -int(rotation / 90))
 
 
@@ -87,20 +87,21 @@ def rotation(header):
 def pixelscale(header):
     binning = int(header["SDTBN"])
     return 0.38 * binning / 3600
-
-
-_boresightdx = -190
-_boresightdy = 0
-
+    
+def _boresightparameters(header):
+    if header["DTDS"] == "SI 1110-167":
+        return -190, 0, math.radians(int(header["EMTMRO"]))
+    elif header["DTDS"] == "SI 1110-185":
+        return 85, 75, math.radians(int(header["EMTMRO"] + 90))
 
 def boresightdx(header):
-    theta = math.radians(int(header["EMTMRO"]))
-    return _boresightdx * math.cos(theta) - _boresightdy * math.sin(theta)
+    boresightdx, boresightdy, theta = _boresightparameters(header)
+    return boresightdx * math.cos(theta) - boresightdy * math.sin(theta)
 
 
 def boresightdy(header):
-    theta = math.radians(int(header["EMTMRO"]))
-    return _boresightdx * math.sin(theta) + _boresightdy * math.cos(theta)
+    boresightdx, boresightdy, theta = _boresightparameters(header)
+    return boresightdx * math.sin(theta) + boresightdy * math.cos(theta)
 
 
 def gain(header):
