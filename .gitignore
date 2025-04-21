@@ -2,3 +2,5 @@
 .DS_Store
 *.pyc
 Worksheet.worksheet
+sandbox/
+docs/build

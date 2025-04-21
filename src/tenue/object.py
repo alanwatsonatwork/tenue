@@ -392,7 +392,7 @@ def makeobject(
 
     aligneddatalist = []
 
-    for data, dx, dy in zip(datfold -alist, dxlist, dylist):
+    for data, dx, dy in zip(datalist, dxlist, dylist):
 
         xlo = nmargin + dx
         xhi = xlo + nwindow
