@@ -1,9 +1,12 @@
 from datetime import datetime
 
 import tenue.image
+import math
 
 
 def defaultdooverscan(name, header, data):
+    if overscanyslice(header) is None or overscanxslice(header) is None:
+        return
     overscandata = data[
         overscanyslice(header),
         overscanxslice(header),
@@ -165,19 +168,31 @@ def flatmax(header):
 
 
 def overscanyslice(header):
-    return _overscanyslice(header)
+    if _overscanyslice is None:
+        return None
+    else:
+        return _overscanyslice(header)
 
 
 def overscanxslice(header):
-    return _overscanxslice(header)
+    if _overscanxslice is None:
+        return None
+    else:
+        return _overscanxslice(header)
 
 
 def trimyslice(header):
-    return _trimyslice(header)
+    if _trimyslice is None:
+        return None
+    else:
+        return _trimyslice(header)
 
 
 def trimxslice(header):
-    return _trimxslice(header)
+    if _trimxslice is None:
+        return None
+    else:
+        return _trimxslice(header)
 
 
 def dorotate(header, data):

@@ -89,21 +89,19 @@ def cook(
     if dooverscan:
         tenue.instrument.dooverscan(name, header, data)
 
-    if dotrim:
+    if dotrim and tenue.instrument.trimyslice(header) is not None and tenue.instrument.trimxslice(header) is not None:
         print("%s: trimming." % (name))
-        data = data[
-            tenue.instrument.trimyslice(header), tenue.instrument.trimxslice(header)
-        ]
+        data = data[tenue.instrument.trimyslice(header), tenue.instrument.trimxslice(header)]
 
-    if dobias:
+    if dobias and _biasdata is not None:
         print("%s: subtracting bias." % (name))
         data -= _biasdata
 
-    if dodark:
+    if dodark and _darkdata is not None:
         print("%s: subtracting dark." % (name))
         data -= _darkdata
 
-    if doflat:
+    if doflat and _flatdata is not None:
         print("%s: dividing by flat." % (name))
         data /= _flatdata
 
@@ -138,19 +136,19 @@ def cook(
 
 def usefakebias():
     global _biasdata
-    _biasdata = np.zeros((4096, 4096))
+    _biasdata = None
     return _biasdata
 
 
 def usefakedark():
     global _darkdata
-    _darkdata = np.zeros((4096, 4096))
+    _darkdata = None
     return _darkdata
 
 
 def usefakeflat():
     global _flatdata
-    _flatdata = np.ones((4096, 4096))
+    _flatdata = None
     return _flatdata
 
 
