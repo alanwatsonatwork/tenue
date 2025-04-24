@@ -89,9 +89,15 @@ def cook(
     if dooverscan:
         tenue.instrument.dooverscan(name, header, data)
 
-    if dotrim and tenue.instrument.trimyslice(header) is not None and tenue.instrument.trimxslice(header) is not None:
+    if (
+        dotrim
+        and tenue.instrument.trimyslice(header) is not None
+        and tenue.instrument.trimxslice(header) is not None
+    ):
         print("%s: trimming." % (name))
-        data = data[tenue.instrument.trimyslice(header), tenue.instrument.trimxslice(header)]
+        data = data[
+            tenue.instrument.trimyslice(header), tenue.instrument.trimxslice(header)
+        ]
 
     if dobias and _biasdata is not None:
         print("%s: subtracting bias." % (name))
@@ -118,18 +124,15 @@ def cook(
 
     if nwindow is not None:
 
-        print(
-            "%s: windowing to %d by %d (with margin of %d)."
-            % (name, nwindow, nwindow, nmargin)
-        )
+        print("%s: windowing to %d by %d." % (name, nwindow, nwindow))
 
-        n = nwindow + 2 * nmargin
-        datashape = np.array(data.shape)
-        yc = int(data.shape[0] / 2)
-        xc = int(data.shape[1] / 2)
-        ys = int(yc - n / 2)
-        xs = int(xc - n / 2)
-        data = data[ys : ys + n, xs : xs + n].copy()
+        assert nwindow <= data.shape[0]
+        assert nwindow <= data.shape[1]
+        ylo = int((data.shape[0] - nwindow) / 2)
+        yhi = ylo + nwindow
+        xlo = int((data.shape[1] - nwindow) / 2)
+        xhi = xlo + nwindow
+        data = data[ylo:yhi, xlo:xhi].copy()
 
     return header, data
 

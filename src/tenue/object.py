@@ -101,8 +101,8 @@ def makeobject(
     refalpha=None,
     refdelta=None,
     sigma=None,
-    nwindow=None,
-    nmargin=256,
+    ninputwindow=None,
+    noutputwindow=None,
     showwindow=True,
     doskyimage=False,
     skyclip=None,
@@ -138,8 +138,7 @@ def makeobject(
             dodark=True,
             doflat=True,
             dorotate=False,
-            nwindow=nwindow,
-            nmargin=nmargin,
+            nwindow=ninputwindow,
         )
         headerlist.append(header)
         datalist.append(data)
@@ -221,29 +220,26 @@ def makeobject(
 
     ############################################################################
 
-    # Extract the window data.
+    # Extract the alignment window data.
 
-    windowdatalist = []
+    alignmentwindowdatalist = []
 
     if align is not None:
 
         for data, dx, dy in zip(datalist, dxlist, dylist):
 
-            aligny = align[0] - nmargin
-            alignx = align[1] - nmargin
-            if nwindow is not None:
-                aligny += nmargin + (data.shape[0] - nwindow) // 2
-                alignx += nmargin + (data.shape[1] - nwindow) // 2
+            aligny = align[0]
+            alignx = align[1]
             alignxlo = alignx + dx - nalignregion // 2
             alignxhi = alignx + dx + nalignregion // 2
             alignylo = aligny + dy - nalignregion // 2
             alignyhi = aligny + dy + nalignregion // 2
 
-            windowdata = data[alignylo:alignyhi, alignxlo:alignxhi].copy()
-            windowdata -= np.nanmedian(windowdata)
-            windowdata = np.nan_to_num(windowdata, nan=0.0)
+            alignmentwindowdata = data[alignylo:alignyhi, alignxlo:alignxhi].copy()
+            alignmentwindowdata -= np.nanmedian(windowdata)
+            alignmentwindowdata = np.nan_to_num(windowdata, nan=0.0)
 
-            windowdatalist.append(windowdata)
+            alignmentwindowdatalist.append(alignmentwindowdata)
 
     ############################################################################
 
@@ -275,10 +271,10 @@ def makeobject(
 
     ############################################################################
 
-    minnmargin = max(np.max(np.abs(np.array(dxlist))), np.max(np.abs(np.array(dylist))))
-    print("makeobject: nmargin must be at least %d." % minnmargin)
-    if nmargin < minnmargin:
-        raise RuntimeError("The value of the nmargin parameter needs to be increased.")
+    nmargin = max(np.max(np.abs(np.array(dxlist))), np.max(np.abs(np.array(dylist))))
+    if noutputwindow is not None:
+        nmargin = max(nmargin, int(noutputwindow - min(data.shape[0], data.shape[1])))
+    print("makeobject: nmargin is %d." % nmargin)
 
     ############################################################################
 
@@ -388,17 +384,31 @@ def makeobject(
 
     ############################################################################
 
-    # Produce the aligned data.
+    # Produce the aligned and windowed data.
 
     aligneddatalist = []
 
     for data, dx, dy in zip(datalist, dxlist, dylist):
 
-        xlo = nmargin + dx
-        xhi = xlo + nwindow
-        ylo = nmargin + dy
-        yhi = ylo + nwindow
-        aligneddata = data[ylo:yhi, xlo:xhi]
+        nydata = data.shape[0]
+        nxdata = data.shape[1]
+
+        aligneddata = np.empty((nydata + 2 * nmargin, nxdata + 2 * nmargin))
+        aligneddata.fill(np.nan)
+
+        ylo = nmargin - dy
+        yhi = ylo + nydata
+        xlo = nmargin - dx
+        xhi = xlo + nxdata
+
+        aligneddata[ylo:yhi, xlo:xhi] = data
+
+        if noutputwindow is not None:
+            ylo = (aligneddata.shape[1] - noutputwindow) // 2
+            yhi = ylo + noutputwindow
+            xlo = (aligneddata.shape[0] - noutputwindow) // 2
+            xhi = xlo + noutputwindow
+            aligneddata = np.copy(aligneddata[ylo:yhi,xlo:xhi])
 
         aligneddata -= np.nanmedian(aligneddata, keepdims=True)
 
@@ -412,7 +422,7 @@ def makeobject(
             "makeobject: averaging %d object files without rejection."
             % len(aligneddatalist)
         )
-        _objectdata = np.average(aligneddatalist, axis=0)
+        _objectdata = np.nanmean(aligneddatalist, axis=0)
     else:
         print(
             "makeobject: averaging %d object files with rejection."
