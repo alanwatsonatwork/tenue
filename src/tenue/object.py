@@ -92,18 +92,18 @@ def _makesky(
 
 
 def makeobject(
-    fitspaths,
     objectname,
+    fitspaths,
     filter,
     fitspathsslice=None,
     align=None,
-    nalignregion=40,
+    nalignmentwindow=40,
     refalpha=None,
     refdelta=None,
     sigma=None,
     ninputwindow=None,
     noutputwindow=None,
-    showwindow=True,
+    showalignment=True,
     doskyimage=False,
     skyclip=None,
     skystretch=0.10,
@@ -111,6 +111,103 @@ def makeobject(
     triggertime=None,
     rejectfraction=0.25,
 ):
+    """
+    Make an object image by cooking, sky-subtracting, aligning, and combining a
+    stack of raw images.
+
+    :param objectname: 
+        The ``objectname`` argument must be a string. The output FITS files will
+        be named ``objectname`` followed by ``"-"`` followed by ``filter``
+        followed by one of ``".fits"`` or ``"-sky.fits"``.
+            
+    :param fitspaths: 
+        The ``fitspath``, ``filter``, and ``fitspathsslice`` arguments are
+        passed to :func:`~tenue.path.getrawfitspaths` to generate the list of
+        raw FITS files.
+
+    :param filter: 
+        The ``filter`` argument is passed to :func:`~tenue.path.getrawfitspaths`
+        to allow selecting raw FITS files in a given filter.
+
+    :param fitspathsslice: 
+        The ``fitspathsslive``argument can be either a slice, either of the
+        string ``"firsthalf"`` or ``"secondhalf"``, or ``None``. It is passed to
+        :func:`~tenue.path.getrawfitspaths` to allow selecting a subset of raw
+        FITS files.
+
+    :param align:
+        The ``align`` argument may be a list of two numbers or ``None``. If it
+        is a list of two numbers, they define the position in the output image
+        of the star that will be used for alignment refinement. If it is
+        ``None``, the alignment will not be refined.
+
+    :param nalignmentwindow: 
+        The ``nalignmentwindow`` argument may be a positive number. It defines
+        the size of the window used to refine the alignment.    
+    
+    :param refalpha:
+    :param refdelta:
+        The ``refalpha`` and ``refdelta`` may be the reference position for
+        alignment in degrees or may be both ``None``. If they are not, the
+        reference position is chosen as the average of the extremes of the
+        unrefined pointings.
+    
+    :param sigma: 
+        The ``sigma`` argument may be a positive number or ``None``. If it is a
+        positive number, the raw files will be combined with sigma-clipping at
+        this level. If it is ``None``, they will be combined without
+        sigma-clipping.
+    
+    :param ninputwindow: 
+        The ``ninputwindow`` argument may be a positive integer or ``None``. If
+        it is a positive integer, the raw files are clipped to a window of this
+        size centered on the data region. If it is ``None``, they are not.
+
+    :param noutputwindow: 
+        The ``noutputwindow`` argument may be a positive integer or ``None``. If
+        it is a positive integer, the output object file is clipped or expanded
+        to a window of this size centered on the reference position. If it is
+        ``None``, they are not.
+
+    :param showalignment:
+        The ``showalignment`` argument may be ``True`` or ``False``. If
+        ``True``, the alignment window is shown for each non-rejected image.
+
+    :param doskyimage:
+        The ``doskyimage`` argument may be ``True`` or ``False``. If ``True``, a
+        sky image is formed and subtracted.
+
+    :param skyclip:
+        The ``skyclip`` argument may be a positive number or ``None``. If it is
+        a positive number, the individual sky files are clipped at this level
+        before combining. If it is ``None``, they will be combined without
+        clipping.
+
+    :param skystretch:
+        The stretch used to show the sky image.
+
+    :param residualimageclip: 
+        The ``doskyimage`` argument may be a positive number or ``None``. If it
+        is a positive number, then pixels at least this bright in the previous
+        image (after cooking) are masked in the current. If it is ``None``, they
+        are not.
+
+    :param triggertime:
+        The ``triggertime`` argument may be the trigger time as an ISO 8901 time
+        represented as a string or ``None``. If it is not ``None``, it is used
+        to calculate and print the start and end times of the observation
+        relative to the trigger time.
+
+    :param rejectfraction: 
+        The ``rejectfraction`` argument may be a number. When refining the
+        alignment, each image is assigned a merit value equal to the maximum
+        value in the alignment window divided by an estimator of the background
+        noise in the alignment window. The images with the lowest merit, up to a
+        fraction given by ``rejectfraction``, are rejected and not combined.
+
+    :return: None
+    """
+
 
     ############################################################################
 
@@ -230,10 +327,10 @@ def makeobject(
 
             aligny = align[0]
             alignx = align[1]
-            alignxlo = alignx + dx - nalignregion // 2
-            alignxhi = alignx + dx + nalignregion // 2
-            alignylo = aligny + dy - nalignregion // 2
-            alignyhi = aligny + dy + nalignregion // 2
+            alignxlo = alignx + dx - nalignmentwindow // 2
+            alignxhi = alignx + dx + nalignmentwindow // 2
+            alignylo = aligny + dy - nalignmentwindow // 2
+            alignyhi = aligny + dy + nalignmentwindow // 2
 
             alignmentwindowdata = data[alignylo:alignyhi, alignxlo:alignxhi].copy()
             alignmentwindowdata -= np.nanmedian(windowdata)
@@ -257,8 +354,8 @@ def makeobject(
             imax = np.unravel_index(
                 np.argmax(windowdata, axis=None), filteredwindowdata.shape
             )
-            ddy = imax[0] - nalignregion // 2
-            ddx = imax[1] - nalignregion // 2
+            ddy = imax[0] - nalignmentwindow // 2
+            ddx = imax[1] - nalignmentwindow // 2
             dx += ddx
             dy += ddy
             print("makeobject: refined offset is dx = %+d px dy = %+d px." % (dx, dy))
@@ -360,7 +457,7 @@ def makeobject(
                 "makeobject: %s: merit is %.1f." % (os.path.basename(fitspath), merit)
             )
 
-            if showwindow:
+            if showalignment:
                 tenue.image.show(windowdata, contrast=0.05, small=True)
 
     ############################################################################

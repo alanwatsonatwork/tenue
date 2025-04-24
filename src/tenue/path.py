@@ -16,7 +16,7 @@ def getrawfitspaths(fitspaths, filter=None, exposuretime=None, fitspathsslice=No
     have that exposure time are eliminated from the list. Finally, if
     ``fitspathsslice`` is not ``None``, then this list is sliced.
 
-    :param fitspaths: A patter to be expanded by :func:`glob.glob`. The
+    :param fitspaths: A pattern to be expanded by :func:`glob.glob`. The
         expansion must give a list of names of FITS files or compressed FITS
         files.
 
