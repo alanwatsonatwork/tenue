@@ -3,7 +3,7 @@ from datetime import datetime
 import os.path
 import numpy as np
 import matplotlib.pyplot as plt
-import statistics
+import warnings
 
 import tenue.cook
 import tenue.fits
@@ -115,21 +115,21 @@ def makeobject(
     Make an object image by cooking, sky-subtracting, aligning, and combining a
     stack of raw images.
 
-    :param objectname: 
+    :param objectname:
         The ``objectname`` argument must be a string. The output FITS files will
         be named ``objectname`` followed by ``"-"`` followed by ``filter``
         followed by one of ``".fits"`` or ``"-sky.fits"``.
-            
-    :param fitspaths: 
+
+    :param fitspaths:
         The ``fitspath``, ``filter``, and ``fitspathsslice`` arguments are
         passed to :func:`~tenue.path.getrawfitspaths` to generate the list of
         raw FITS files.
 
-    :param filter: 
+    :param filter:
         The ``filter`` argument is passed to :func:`~tenue.path.getrawfitspaths`
         to allow selecting raw FITS files in a given filter.
 
-    :param fitspathsslice: 
+    :param fitspathsslice:
         The ``fitspathsslive``argument can be either a slice, either of the
         string ``"firsthalf"`` or ``"secondhalf"``, or ``None``. It is passed to
         :func:`~tenue.path.getrawfitspaths` to allow selecting a subset of raw
@@ -141,29 +141,29 @@ def makeobject(
         of the star that will be used for alignment refinement. If it is
         ``None``, the alignment will not be refined.
 
-    :param nalignmentwindow: 
+    :param nalignmentwindow:
         The ``nalignmentwindow`` argument may be a positive number. It defines
-        the size of the window used to refine the alignment.    
-    
+        the size of the window used to refine the alignment.
+
     :param refalpha:
     :param refdelta:
         The ``refalpha`` and ``refdelta`` may be the reference position for
         alignment in degrees or may be both ``None``. If they are not, the
         reference position is chosen as the average of the extremes of the
         unrefined pointings.
-    
-    :param sigma: 
+
+    :param sigma:
         The ``sigma`` argument may be a positive number or ``None``. If it is a
         positive number, the raw files will be combined with sigma-clipping at
         this level. If it is ``None``, they will be combined without
         sigma-clipping.
-    
-    :param ninputwindow: 
+
+    :param ninputwindow:
         The ``ninputwindow`` argument may be a positive integer or ``None``. If
         it is a positive integer, the raw files are clipped to a window of this
         size centered on the data region. If it is ``None``, they are not.
 
-    :param noutputwindow: 
+    :param noutputwindow:
         The ``noutputwindow`` argument may be a positive integer or ``None``. If
         it is a positive integer, the output object file is clipped or expanded
         to a window of this size centered on the reference position. If it is
@@ -186,7 +186,7 @@ def makeobject(
     :param skystretch:
         The stretch used to show the sky image.
 
-    :param residualimageclip: 
+    :param residualimageclip:
         The ``doskyimage`` argument may be a positive number or ``None``. If it
         is a positive number, then pixels at least this bright in the previous
         image (after cooking) are masked in the current. If it is ``None``, they
@@ -198,7 +198,7 @@ def makeobject(
         to calculate and print the start and end times of the observation
         relative to the trigger time.
 
-    :param rejectfraction: 
+    :param rejectfraction:
         The ``rejectfraction`` argument may be a number. When refining the
         alignment, each image is assigned a merit value equal to the maximum
         value in the alignment window divided by an estimator of the background
@@ -207,7 +207,6 @@ def makeobject(
 
     :return: None
     """
-
 
     ############################################################################
 
@@ -325,12 +324,15 @@ def makeobject(
 
         for data, dx, dy in zip(datalist, dxlist, dylist):
 
+            nydata = data.shape[0]
+            nxdata = data.shape[1]
+
             aligny = align[0]
             alignx = align[1]
-            alignxlo = alignx + dx - nalignmentwindow // 2
-            alignxhi = alignx + dx + nalignmentwindow // 2
-            alignylo = aligny + dy - nalignmentwindow // 2
-            alignyhi = aligny + dy + nalignmentwindow // 2
+            alignylo = aligny + dy - nalignmentwindow // 2 + nydata // 2
+            alignyhi = aligny + dy + nalignmentwindow // 2 + nydata // 2
+            alignxlo = alignx + dx - nalignmentwindow // 2 + nxdata // 2
+            alignxhi = alignx + dx + nalignmentwindow // 2 + nxdata // 2
 
             alignmentwindowdata = data[alignylo:alignyhi, alignxlo:alignxhi].copy()
             alignmentwindowdata -= np.nanmedian(windowdata)
@@ -347,7 +349,7 @@ def makeobject(
         newdxlist = []
         newdylist = []
 
-        for windowdata, dx, dy in zip(windowdatalist, dxlist, dylist):
+        for windowdata, dx, dy in zip(alignmentwindowdatalist, dxlist, dylist):
 
             filteredwindowdata = tenue.image.medianfilter(np.copy(windowdata), 3)
 
@@ -381,7 +383,7 @@ def makeobject(
 
     if align is not None:
 
-        for windowdata in windowdatalist:
+        for windowdata in alignmentwindowdatalist:
 
             merit = float(
                 np.max(tenue.image.medianfilter(windowdata, 3))
@@ -431,7 +433,7 @@ def makeobject(
         )
         windowdatalist = list(
             windowdata
-            for windowdata, merit in zip(windowdatalist, meritlist)
+            for windowdata, merit in zip(alignmentwindowdatalist, meritlist)
             if merit >= meritlimit
         )
         dxlist = list(dx for dx, merit in zip(dxlist, meritlist) if merit >= meritlimit)
@@ -505,7 +507,7 @@ def makeobject(
             yhi = ylo + noutputwindow
             xlo = (aligneddata.shape[0] - noutputwindow) // 2
             xhi = xlo + noutputwindow
-            aligneddata = np.copy(aligneddata[ylo:yhi,xlo:xhi])
+            aligneddata = np.copy(aligneddata[ylo:yhi, xlo:xhi])
 
         aligneddata -= np.nanmedian(aligneddata, keepdims=True)
 
@@ -519,22 +521,21 @@ def makeobject(
             "makeobject: averaging %d object files without rejection."
             % len(aligneddatalist)
         )
-        _objectdata = np.nanmean(aligneddatalist, axis=0)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            _objectdata = np.nanmean(aligneddatalist, axis=0)
     else:
         print(
             "makeobject: averaging %d object files with rejection."
             % len(aligneddatalist)
         )
-        if True:
-            _objectdata, objectsigma = tenue.image.clippedmeanandsigma(
-                aligneddatalist, sigma=10, axis=0
-            )
-            sigma = tenue.image.clippedmean(objectsigma, sigma=3) / math.sqrt(
-                len(aligneddatalist)
-            )
-            print("makeobject: estimated noise in object image is %.2f DN." % sigma)
-        else:
-            _objectdata = np.nanmean(aligneddatalist, axis=0)
+        _objectdata, objectsigma = tenue.image.clippedmeanandsigma(
+            aligneddatalist, sigma=10, axis=0
+        )
+        sigma = tenue.image.clippedmean(objectsigma, sigma=3) / math.sqrt(
+            len(aligneddatalist)
+        )
+        print("makeobject: estimated noise in object image is %.2f DN." % sigma)
 
     tenue.image.show(_objectdata, zscale=True, contrast=0.1)
 
