@@ -72,11 +72,11 @@ def dorotate(header, data):
 
 
 def alpha(header):
-    return header["SMTMRA"]
+    return header["STRSTRA"]
 
 
 def delta(header):
-    return header["SMTMDE"]
+    return header["STRSTDE"]
 
 
 def rotation(header):
