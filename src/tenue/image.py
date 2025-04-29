@@ -104,17 +104,22 @@ def show(
         data, interval=interval, stretch=stretch
     )
 
+    ny = data.shape[0]
+    nx = data.shape[1]
+    nmax = max(ny, nx)
+    
     if np.max(data.shape) > 1000:
         tickinterval = 100
     else:
-        tickinterval = int(math.pow(2, int(math.log2(np.max(data.shape) / 16))))
-    ticks = list(range(0, np.max(data.shape), tickinterval))
+        tickinterval = int(math.pow(2, int(math.log2(nmax / 16))))
+    ticks = list(np.linspace(-tickinterval * (nmax // 2 // tickinterval), +tickinterval * (nmax // 2 // tickinterval), 1 + 2 * (nmax // 2 // tickinterval)))
+
 
     if small:
         plt.figure(figsize=(5, 5))
     else:
         plt.figure(figsize=(10, 10))
-    plt.imshow(data, origin="lower", norm=norm)
+    plt.imshow(data, origin="lower", norm=norm, extent=[-nx/2, +nx/2, -ny/2, +ny/2])
     plt.xticks(ticks, rotation=90)
     plt.yticks(ticks)
     plt.colorbar(fraction=0.046, pad=0.035)
