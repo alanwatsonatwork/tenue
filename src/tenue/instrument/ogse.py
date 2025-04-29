@@ -24,7 +24,7 @@ def trimxslice(header):
 
 
 def dorotate(header, data):
-    rotation = header["SMTMRO"]
+    rotation = header["SMTMRO"] + 90
     return np.rot90(data, -int(rotation / 90))
 
 
@@ -41,7 +41,7 @@ def rotation(header):
     if date < "2025-01-01":
         return 90
     else:
-        return 62
+        return 62 - 90
 
 
 def pixelscale(header):
