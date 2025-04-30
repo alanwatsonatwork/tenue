@@ -110,6 +110,7 @@ def makeobject(
     residualimageclip=None,
     triggertime=None,
     rejectfraction=0.25,
+    reject=None,
 ):
     """
     Make an object image by cooking, sky-subtracting, aligning, and combining a
@@ -199,11 +200,23 @@ def makeobject(
         relative to the trigger time.
 
     :param rejectfraction:
-        The ``rejectfraction`` argument may be a number. When refining the
+        The ``rejectfraction`` argument may be a number or ``None``. When
+        refining the alignment, each image is assigned a merit value equal to
+        the maximum value in the alignment window divided by an estimator of the
+        background noise in the alignment window. If ``rejectfraction`` is not
+        ``None``, the images with the lowest merit, up to a fraction given by
+        ``rejectfraction``, are rejected and not combined. Only one of
+        ``reject`` and ``rejectfraction`` can be a number.
+
+    :param reject:
+        The ``reject`` argument may be a number or None. When refining the
         alignment, each image is assigned a merit value equal to the maximum
         value in the alignment window divided by an estimator of the background
-        noise in the alignment window. The images with the lowest merit, up to a
-        fraction given by ``rejectfraction``, are rejected and not combined.
+        noise in the alignment window. If ``reject`` is not ``None``, the images
+        with the lowest merit, up to the value give by ``reject``, are rejected
+        and not combined. Only one of ``reject`` and ``rejectfraction`` can be a
+        number.
+
 
     :return: None
     """
@@ -335,8 +348,12 @@ def makeobject(
             alignxhi = alignx + dx + nalignmentwindow // 2 + nxdata // 2
 
             alignmentwindowdata = data[alignylo:alignyhi, alignxlo:alignxhi].copy()
-            alignmentwindowdata -= np.nanmedian(windowdata)
-            alignmentwindowdata = np.nan_to_num(windowdata, nan=0.0)
+            alignmentwindowdata -= np.nanmedian(alignmentwindowdata)
+            alignmentwindowdata = np.nan_to_num(alignmentwindowdata, nan=0.0)
+
+            alignmentwindowdata = tenue.image.medianfilter(
+                np.copy(alignmentwindowdata), 3
+            )
 
             alignmentwindowdatalist.append(alignmentwindowdata)
 
@@ -349,24 +366,37 @@ def makeobject(
         newdxlist = []
         newdylist = []
 
+        ddxlist = []
+        ddylist = []
+
         for windowdata, dx, dy in zip(alignmentwindowdatalist, dxlist, dylist):
 
-            filteredwindowdata = tenue.image.medianfilter(np.copy(windowdata), 3)
+            # filteredwindowdata = tenue.image.medianfilter(np.copy(windowdata), 5)
 
-            imax = np.unravel_index(
-                np.argmax(windowdata, axis=None), filteredwindowdata.shape
-            )
+            imax = np.unravel_index(np.argmax(windowdata, axis=None), windowdata.shape)
             ddy = imax[0] - nalignmentwindow // 2
             ddx = imax[1] - nalignmentwindow // 2
+
             dx += ddx
             dy += ddy
-            print("makeobject: refined offset is dx = %+d px dy = %+d px." % (dx, dy))
+            print("makeobject: correction is ddx = %+d px ddy = %+d px." % (ddx, ddy))
 
+            ddxlist.append(ddx)
+            ddylist.append(ddy)
             newdxlist.append(dx)
             newdylist.append(dy)
 
         dxlist = newdxlist
         dylist = newdylist
+
+        print(
+            "makeobject: range of y correction is %+d to %+d."
+            % (np.min(ddylist), np.max(ddylist))
+        )
+        print(
+            "makeobject: range of x correction is %+d to %+d."
+            % (np.min(ddxlist), np.max(ddxlist))
+        )
 
     ############################################################################
 
@@ -391,6 +421,9 @@ def makeobject(
             )
             meritlist.append(merit)
 
+    for fitspath, merit in zip(fitspathlist, meritlist):
+        print("makeobject: %s has a merit of %.1f." % (fitspath, merit))
+
     ############################################################################
 
     # Reject based on merit.
@@ -398,11 +431,17 @@ def makeobject(
     if len(meritlist) > 0:
 
         noriginal = len(datalist)
-        meritlimit = np.percentile(meritlist, 100 * rejectfraction)
-        print(
-            "makeobject: rejecting fraction %.2f of images with merit less than %.1f."
-            % (rejectfraction, meritlimit)
-        )
+        if rejectfraction is not None:
+            meritlimit = np.percentile(meritlist, 100 * rejectfraction)
+            print(
+                "makeobject: rejecting fraction %.2f of images with merit less than %.1f."
+                % (rejectfraction, meritlimit)
+            )
+        else:
+            meritlimit = reject
+            print(
+                "makeobject: rejecting images with merit less than %.1f." % (meritlimit)
+            )
 
         x = [-np.inf] + sorted(meritlist)
         y = np.arange(0, noriginal + 1) / noriginal
@@ -413,7 +452,8 @@ def makeobject(
         plt.xlim(left=0)
         plt.yticks(np.linspace(0, 1, 11))
         plt.axvline(meritlimit, color="C1")
-        plt.axhline(rejectfraction, color="C1")
+        if rejectfraction is not None:
+            plt.axhline(rejectfraction, color="C1")
         plt.xlabel("Merit")
         plt.ylabel("Cumulative Fraction")
         plt.show()
@@ -446,6 +486,10 @@ def makeobject(
             "makeobject: rejected %d images out of %d."
             % ((noriginal - nfinal), noriginal)
         )
+        if nfinal == 0:
+            print("makeobject: no images to average.")
+            return
+
 
     ############################################################################
 
