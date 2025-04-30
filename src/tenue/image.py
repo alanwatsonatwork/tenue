@@ -20,8 +20,14 @@ def sigma_clipped_stats(stack, sigma=3.0, axis=None):
             stack, sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
         )
 
+    except that it converts all ndarrays to float32 before returning them.
+
+    Furthermore, for the common case of clipping a stack of 2D arrays, it is
+    does so row by row, which is much more efficient in terms of memory use.
+
     :param stack: A stack of data
-    :param sigma: The number of standard deviations for the upper and lower clipping limits. Defaults to 3.0
+    :param sigma: The number of standard deviations for the upper and lower
+        clipping limits. Defaults to 3.0
     :param axis: The axis along with to clip the data. Defaults to None.
     :return: The mean, median, and standard deviation of the data.
     """
