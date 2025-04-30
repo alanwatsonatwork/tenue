@@ -10,20 +10,39 @@ import scipy.ndimage
 
 import matplotlib.pyplot as plt
 
-def sigma_clipped_stats(stack, sigma=3.0, axis=None):
+def sigma_clipped_stats(data, sigma=3.0, axis=None):
+    """
+    Return sigma-clipped statistics of the data.
 
-    if not isinstance(stack, np.ndarray):
-        stack = np.array(stack)
+    This function behaves exactly as:
+    
+        astropy.stats.sigma_clipped_stats(
+            data, sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
+        )
+
+    except that it converts any arrays to float32 before returning them.
+
+    Furthermore, for the common case of clipping a stack of 2D arrays, it is
+    does so row by row, which is much more efficient in terms of memory use.
+
+    :param data: A data of data
+    :param sigma: The number of standard deviations for the upper and lower
+        clipping limits. Defaults to 3.0
+    :param axis: The axis along with to clip the data. Defaults to None.
+    :return: The mean, median, and standard deviation of the data.
+    """
+
+    if not isinstance(data, np.ndarray):
+        data = np.array(data)
 
     with warnings.catch_warnings():
 
         warnings.simplefilter("ignore", Warning)
 
-        if axis == 0 and len(stack.shape) == 3:
+        if axis == 0 and len(data.shape) == 3:
 
-            nz = stack.shape[0]
-            ny = stack.shape[1]
-            nx = stack.shape[2]
+            ny = data.shape[1]
+            nx = data.shape[2]
 
             meanimage = np.full([ny, nx], np.nan, dtype="float32")
             medianimage = np.full([ny, nx], np.nan, dtype="float32")
@@ -31,7 +50,7 @@ def sigma_clipped_stats(stack, sigma=3.0, axis=None):
 
             for iy in range(ny):
                 meanrow, medianrow, sigmarow = astropy.stats.sigma_clipped_stats(
-                        stack[:, iy, :],
+                        data[:, iy, :],
                         sigma=sigma,
                         axis=0,
                         cenfunc="median",
@@ -49,7 +68,7 @@ def sigma_clipped_stats(stack, sigma=3.0, axis=None):
         else:
 
             mean, median, sigma = astropy.stats.sigma_clipped_stats(
-                stack, sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
+                data, sigma=sigma, axis=axis, cenfunc="median", stdfunc="mad_std"
             )
 
     if isinstance(mean, np.ndarray):
@@ -62,22 +81,22 @@ def sigma_clipped_stats(stack, sigma=3.0, axis=None):
     return mean, median, sigma
 
 
-def clippedmean(stack, sigma=3.0, axis=None):
+def clippedmean(data, sigma=3.0, axis=None):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", Warning)
-        mean, median, sigma = sigma_clipped_stats(stack, sigma=sigma, axis=axis)
+        mean, median, sigma = sigma_clipped_stats(data, sigma=sigma, axis=axis)
     return mean
 
 
-def clippedsigma(stack, sigma=3.0, axis=None):
+def clippedsigma(data, sigma=3.0, axis=None):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", Warning)
-        mean, median, sigma = sigma_clipped_stats(stack, sigma=sigma, axis=axis)
+        mean, median, sigma = sigma_clipped_stats(data, sigma=sigma, axis=axis)
     return sigma
 
 
-def clippedmeanandsigma(stack, sigma=3.0, axis=None):
-    mean, median, sigma = sigma_clipped_stats(stack, sigma=sigma, axis=axis)
+def clippedmeanandsigma(data, sigma=3.0, axis=None):
+    mean, median, sigma = sigma_clipped_stats(data, sigma=sigma, axis=axis)
     return mean, sigma
 
 
