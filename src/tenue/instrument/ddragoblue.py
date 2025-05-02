@@ -92,7 +92,7 @@ def _boresightparameters(header):
     if header["DTDS"] == "SI 1110-167":
         return -190, 0, math.radians(int(header["EMTMRO"]))
     elif header["DTDS"] == "SI 1110-185":
-        return 85, 75, math.radians(int(header["EMTMRO"] + 90))
+        return 110, 60, math.radians(int(header["EMTMRO"] + 90))
 
 def boresightdx(header):
     boresightdx, boresightdy, theta = _boresightparameters(header)
