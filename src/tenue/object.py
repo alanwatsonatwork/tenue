@@ -421,14 +421,14 @@ def makeobject(
             )
             meritlist.append(merit)
 
-    for fitspath, merit in zip(fitspathlist, meritlist):
-        print("makeobject: %s has a merit of %.1f." % (fitspath, merit))
+        for fitspath, merit in zip(fitspathlist, meritlist):
+            print("makeobject: %s has a merit of %.1f." % (fitspath, merit))
 
     ############################################################################
 
     # Reject based on merit.
 
-    if len(meritlist) > 0:
+    if len(meritlist) > 0 and (reject is not None or rejectfraction is not None):
 
         noriginal = len(datalist)
         if rejectfraction is not None:
@@ -489,6 +489,9 @@ def makeobject(
         if nfinal == 0:
             print("makeobject: no images to average.")
             return
+    else:
+        windowdatalist = alignmentwindowdatalist
+
 
 
     ############################################################################
