@@ -1,0 +1,12 @@
+name: Problem issue for project work
+description: Create a problem issue for the project work
+projects: 
+  - alanwatsonatwork/7
+assignees:
+  - alanwatsonatwork
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      placeholder: Describe your problem here ...
