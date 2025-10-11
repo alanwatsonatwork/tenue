@@ -6,7 +6,6 @@ import tenue.image
 
 
 def dooverscan(name, header, data):
-    # Currently only works for the 4kx4k window with binning 1.
     binning = int(header["SDTBN"])
     if data.shape[0] == (4096 // binning) and data.shape[1] == (4192 // binning):
         p0 = tenue.image.clippedmean(
