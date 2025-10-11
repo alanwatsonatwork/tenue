@@ -64,10 +64,9 @@ def trimxslice(header):
 
 
 def dorotate(header, data):
-    if header["DTDS"] == "SI 1110-167":
-        rotation = -header["SMTMRO"]
-    elif header["DTDS"] == "SI 1110-185":
-        rotation = header["SMTMRO"] + 90   
+    if header["INSTRUME"] == "C2":
+        data = np.flipud(data)
+    rotation = header["SMTMRO"]
     return np.rot90(data, -int(rotation / 90))
 
 
@@ -87,12 +86,15 @@ def rotation(header):
 def pixelscale(header):
     binning = int(header["SDTBN"])
     return 0.38 * binning / 3600
-    
+
+
 def _boresightparameters(header):
+    return 0, 0, 0
     if header["DTDS"] == "SI 1110-167":
         return -190, 0, math.radians(int(header["EMTMRO"]))
     elif header["DTDS"] == "SI 1110-185":
         return 110, 60, math.radians(int(header["EMTMRO"] + 90))
+
 
 def boresightdx(header):
     boresightdx, boresightdy, theta = _boresightparameters(header)
