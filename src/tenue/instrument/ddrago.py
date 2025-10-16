@@ -62,14 +62,22 @@ def trimxslice(header):
     return slice(int(48 / binning), int(4144 / binning))
 
 
+def rotation(header):
+    return 0
+
+
 def dorotate(header, data):
-    if header["INSTRUME"] == "C1":
-        if header["DTDS"] == "SI 1110-167":
-            rotation = header["SMTMRO"]
-        elif header["DTDS"] == "SI 1110-185":
-            rotation = header["SMTMRO"] + 90
     if header["INSTRUME"] == "C2":
         data = np.flipud(data)
+    if header["INSTRUME"] == "C1":
+        if header["DTDS"] == "SI 1110-167":
+            # Rotation verified with data from 2025-10-05
+            rotation = header["SMTMRO"]
+        elif header["DTDS"] == "SI 1110-185":
+            # Rotation verified with data from 2025-07-07
+            rotation = header["SMTMRO"] + 90
+    else:
+        # Rotation verified with data from 2025-10-05
         rotation = header["SMTMRO"]
     return np.rot90(data, -int(rotation / 90))
 
@@ -82,33 +90,24 @@ def delta(header):
     return header["STRSTDE"]
 
 
-def rotation(header):
-    date = header["DATE-OBS"][:10]
-    return 0
-
-
 def pixelscale(header):
     binning = int(header["SDTBN"])
     return 0.38 * binning / 3600
 
 
 def _boresightparameters(header):
-    print(header["EMTMRO"])
     if header["INSTRUME"] == "C1":
         if header["DATE-OBS"] <= "2025-03-18":
-            print("A")
-            return -190, 0, math.radians(int(header["EMTMRO"]))
+            return -190, 0, math.radians(header["SMTMRO"])
         elif header["DATE-OBS"] <= "2025-08-27":
-            print("B")
             # Validated against observations on 2025-07-04
-            return 95, 90, math.radians(int(header["EMTMRO"] + 90))
-            return 110, 60, math.radians(int(header["EMTMRO"] + 90))
+            return 95, 90, math.radians(header["SMTMRO"] + 90)
         else:
             # Validated against observations on 2025-10-08
-            print("C")
-            return -100, +130, math.radians(int(header["EMTMRO"]))
+            return -100, +130, math.radians(header["SMTMRO"])
     else:
-        return -50, +160, math.radians(int(header["EMTMRO"]))
+        # Validated against observations on 2025-10-08
+        return -50, +160, math.radians(header["SMTMRO"])
 
 
 def boresightdx(header):
