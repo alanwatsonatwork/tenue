@@ -98,16 +98,18 @@ def pixelscale(header):
 def _boresightparameters(header):
     if header["INSTRUME"] == "C1":
         if header["DATE-OBS"] <= "2025-03-18":
-            return -190, 0, math.radians(header["SMTMRO"])
+            print("A")
+            return -190, 0, math.radians(int(header["EMTMRO"]))
         elif header["DATE-OBS"] <= "2025-08-27":
             # Validated against observations on 2025-07-04
-            return 95, 90, math.radians(header["SMTMRO"] + 90)
+            return 95, 90, math.radians(int(header["EMTMRO"] + 90))
+            return 110, 60, math.radians(int(header["EMTMRO"] + 90))
         else:
             # Validated against observations on 2025-10-08
-            return -100, +130, math.radians(header["SMTMRO"])
+            print("C")
+            return -100, +130, math.radians(int(header["EMTMRO"]))
     else:
-        # Validated against observations on 2025-10-08
-        return -50, +160, math.radians(header["SMTMRO"])
+        return -50, +160, math.radians(int(header["EMTMRO"]))
 
 
 def boresightdx(header):
